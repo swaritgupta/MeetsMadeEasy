@@ -3,6 +3,8 @@ import { AppModule } from './app/app.module';
 const figlet = require('figlet');
 import * as dotenv from 'dotenv';
 import { connectRedis } from './utilities/RedisClient';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const banner = async (name: string) => {
   return new Promise((resolve, reject) => {
@@ -19,7 +21,21 @@ const banner = async (name: string) => {
 };
 
 async function bootstrap() {
-  dotenv.config({ path: '.env' });
+  const envCandidates = [
+    path.resolve(process.cwd(), '.env'),
+    path.resolve(__dirname, '..', '.env'),
+  ];
+  let envLoaded = false;
+  for (const envPath of envCandidates) {
+    if (fs.existsSync(envPath)) {
+      dotenv.config({ path: envPath });
+      envLoaded = true;
+      break;
+    }
+  }
+  if (!envLoaded) {
+    dotenv.config();
+  }
   const bannerVal = process.env.BANNER;
   if(!bannerVal){
     console.error("Banner went missing");

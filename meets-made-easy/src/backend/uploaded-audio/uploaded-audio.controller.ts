@@ -19,7 +19,7 @@ export class UploadedAudioController {
         },
       }),
       fileFilter: (req, file, callback) => {
-        const allowedTypes = ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp4, audio/mp3'];
+        const allowedTypes = ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp4', 'audio/mp3'];
         if (!allowedTypes.includes(file.mimetype)) {
           return callback(
             new BadRequestException('Unsupported file type'),
@@ -37,6 +37,6 @@ export class UploadedAudioController {
       throw new BadRequestException('File is required');
     }
     const result = await this.uploadedAudioService.enqueueAudioFile(file);
-    return res.status(200).json({message: 'Audio file uploaded'})
+    return res.status(200).json({message: 'Audio file uploaded', result})
   }
 }

@@ -4,7 +4,7 @@ import { AUDIO_PROCESSING_QUEUE, PROCESS_AUDIO_JOB } from './queue-constants';
 import type { Job } from 'bull';
 
 interface AudioJobPayload{
-  file: Express.Multer.File;
+  filePath: string;
 }
 @Processor(AUDIO_PROCESSING_QUEUE)
 export class AudioProcessor{
@@ -12,8 +12,9 @@ export class AudioProcessor{
 
   @Process(PROCESS_AUDIO_JOB)
   async handleAudioJob(job: Job<AudioJobPayload>){
-    const file = job.data.file;
+    const filePath = job.data.filePath;
     console.log("File is getting processed");
+    await this.uploadedAudioService.transcribeAudio(filePath);
     return;
   }
 }
