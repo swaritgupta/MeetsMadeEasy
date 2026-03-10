@@ -61,10 +61,23 @@ export class UploadedAudioService {
           wavPath,
         ]);
       } catch (err) {
-        throw new Error('ffmpeg is required to transcode audio to WAV 16k. Please install ffmpeg and try again.');
+        throw new Error(
+          'ffmpeg is required to transcode audio to WAV 16k. Please install ffmpeg and try again.',
+        );
       }
-      const transcribtion =  await whisper(wavPath, {
-        modelName: 'base.en', 
+      const transcribtion = await whisper(wavPath, {
+        modelName: 'medium.en',
+        whisperOptions: {
+          language: 'en',
+          word_timestamps: true, // enables word-level timing
+          condition_on_previous_text: false, // prevents hallucination loops
+          no_speech_threshold: 0.6, // skip segments that are likely silence/noise
+          logprob_threshold: -1.0, // reject low-confidence segments
+          compression_ratio_threshold: 2.4,
+          temperature: 0, // 0 = greedy, most deterministic output
+          beam_size: 5, // higher = more accurate, slower
+          best_of: 5,
+        },
       });
       const result = transcribtion.map(segment => segment.speech).join(' ');
       console.log(result)
