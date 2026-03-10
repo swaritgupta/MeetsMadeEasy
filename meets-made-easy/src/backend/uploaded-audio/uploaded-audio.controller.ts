@@ -4,7 +4,7 @@ import type { Request, Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname, join } from 'node:path';
-@Controller('/api/channels/v1.0/uploaded-audio')
+@Controller('/api/v1.0/uploaded-audio')
 export class UploadedAudioController {
   constructor(private readonly uploadedAudioService: UploadedAudioService) {}
 
@@ -19,7 +19,7 @@ export class UploadedAudioController {
         },
       }),
       fileFilter: (req, file, callback) => {
-        const allowedTypes = ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp4'];
+        const allowedTypes = ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp4, audio/mp3'];
         if (!allowedTypes.includes(file.mimetype)) {
           return callback(
             new BadRequestException('Unsupported file type'),
@@ -32,9 +32,11 @@ export class UploadedAudioController {
     }),
   )
   async uploadAudio(@UploadedFile() file: Express.Multer.File, @Req() req: Request, @Res() res: Response){
+    
     if(!file){
       throw new BadRequestException('File is required');
     }
+    
     return res.status(200).json({message: 'Audio file uploaded'})
   }
 }
