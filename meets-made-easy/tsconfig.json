@@ -1,7 +1,14 @@
 {
   "compilerOptions": {
+    "ignoreDeprecations": "6.0",
     "module": "nodenext",
     "moduleResolution": "nodenext",
+    "baseUrl": ".",
+    "paths": {
+      "@nestjs/bull/lib/*": [
+        "node_modules/@nestjs/bull/dist/*"
+      ]
+    },
     "resolvePackageJsonExports": true,
     "esModuleInterop": true,
     "isolatedModules": true,
