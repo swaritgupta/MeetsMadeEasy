@@ -36,7 +36,7 @@ export class UploadedAudioController {
     if(!file){
       throw new BadRequestException('File is required');
     }
-    
+    const result = await this.uploadedAudioService.enqueueAudioFile(file);
     return res.status(200).json({message: 'Audio file uploaded'})
   }
 }
