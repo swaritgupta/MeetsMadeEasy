@@ -25,7 +25,13 @@ def _load_pipeline() -> Pipeline:
         raise RuntimeError(
             "Missing Hugging Face token. Set HF_TOKEN or HUGGING_FACE_API_KEY."
         )
-    pipeline = Pipeline.from_pretrained(MODEL_ID, use_auth_token=token)
+    try:
+        pipeline = Pipeline.from_pretrained(MODEL_ID, use_auth_token=token)
+    except Exception as exc:
+        raise RuntimeError(
+            "Failed to download pyannote models. Make sure your token is valid and you have accepted the "
+            "gated model terms for pyannote/segmentation-3.0 and pyannote/speaker-diarization-3.1."
+        ) from exc
     if torch.cuda.is_available():
         pipeline.to(torch.device("cuda"))
     return pipeline

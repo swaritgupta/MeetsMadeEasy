@@ -18,8 +18,12 @@ export class AudioProcessor{
   async handleAudioJob(job: Job<AudioJobPayload>){
     const filePath = job.data.filePath;
     console.log("File is getting processed");
-    await this.uploadedAudioService.transcribeAudio(filePath);
-    const diarisation = await this.diarisationService.diariseAudio(filePath);
+    // await this.uploadedAudioService.transcribeAudio(filePath);
+    // const diarisation = await this.diarisationService.diariseAudio(filePath);
+    const [transcription, diarisation] = await Promise.all([
+      this.uploadedAudioService.transcribeAudio(filePath),
+      this.diarisationService.diariseAudio(filePath)
+    ])
     const count = Array.isArray(diarisation?.segments) ? diarisation.segments.length : 0;
     console.log(`Diarisation complete. segments=${count}`);
     console.log(diarisation.segments);
