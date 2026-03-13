@@ -1,9 +1,10 @@
 import { HttpService } from "@nestjs/axios";
-import { HttpException, HttpStatus } from "@nestjs/common";
+import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { AxiosRequestConfig, AxiosResponse } from "axios";
 import { firstValueFrom } from "rxjs";
 
 
+@Injectable()
 export class HttpUtil{
   constructor(private readonly httpService: HttpService){}
 

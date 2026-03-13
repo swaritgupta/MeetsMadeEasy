@@ -22,9 +22,14 @@ export class UploadedAudioService {
   ){}
   async enqueueAudioFile(file: Express.Multer.File){
     console.log('File is being processed')
+    if(!file){
+      console.log('no file found')
+    }
     return this.audioQueue.add(
       PROCESS_AUDIO_JOB,
-      { filePath: file.path },
+      { filePath: file.path,
+        file: file,
+      },
       {
         attempts: 3,
         backoff: { type: 'exponential', delay: 2000 },

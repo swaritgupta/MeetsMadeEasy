@@ -32,6 +32,7 @@
     "cache-manager-redis-store": "^3.0.1",
     "figlet": "^1.11.0",
     "fs": "^0.0.1-security",
+    "form-data": "^4.0.0",
     "ioredis": "^5.10.0",
     "multer": "^2.1.1",
     "openai": "^6.27.0",

@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 import { LiveAudioModule } from '../live-audio/live-audio.module';
 import { UploadedAudioModule } from '../uploaded-audio/uploaded-audio.module';
 import { BullModule } from '@nestjs/bull';
+import { HttpUtilModule } from '../utilities/http-util.module';
 
 @Module({
   imports: [
@@ -15,6 +16,8 @@ import { BullModule } from '@nestjs/bull';
       },
     }),
     UploadedAudioModule,
+    HttpUtilModule,
+    
   ],
   controllers: [AppController],
   providers: [AppService],
