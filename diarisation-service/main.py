@@ -20,7 +20,7 @@ app = FastAPI(title="Diarisation Service", version="1.0.0")
 
 
 def _load_pipeline() -> Pipeline:
-    token = os.getenv("HF_TOKEN") or os.getenv("HUGGING_FACE_API_KEY")
+    token = os.getenv("HF_TOKEN") or os.getenv("HUGGING_FACE_API_KEY") 
     if not token:
         raise RuntimeError(
             "Missing Hugging Face token. Set HF_TOKEN or HUGGING_FACE_API_KEY."

@@ -24,9 +24,20 @@ export class AudioProcessor{
       this.uploadedAudioService.transcribeAudio(filePath),
       this.diarisationService.diariseAudio(filePath)
     ])
-    const count = Array.isArray(diarisation?.segments) ? diarisation.segments.length : 0;
-    console.log(`Diarisation complete. segments=${count}`);
-    console.log(diarisation.segments);
+    // const count = Array.isArray(diarisation?.segments) ? diarisation.segments.length : 0;
+    // console.log(`Diarisation complete. segments=${count}`);
+    // console.log(diarisation.segments);
+
+    //merging the transcription with diarisation
+    const diarSegments = diarisation?.segments;
+    if(Array.isArray(diarSegments) && Array.isArray(transcription)){
+      const convSegment = await this.uploadedAudioService.mergeTranscriptionDiarisation(diarSegments, transcription);
+      console.log(convSegment);
+    }
+    else{
+      console.error('Error while processing audio');
+    }
+    
     return;
   }
 
