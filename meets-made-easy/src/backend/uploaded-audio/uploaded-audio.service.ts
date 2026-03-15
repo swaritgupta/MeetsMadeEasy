@@ -8,6 +8,7 @@ import { InjectQueue } from '@nestjs/bull';
 import type { Queue } from 'bull';
 import type { Express } from 'express';
 import { AUDIO_PROCESSING_QUEUE,PROCESS_AUDIO_JOB} from '../queues/queue-constants';
+import { randomUUID } from 'crypto';
 import { OpenAI } from 'openai';
 import { OpenAIClient } from '../utilities/OpenAIClient';
 import whisper from 'whisper-node';
@@ -28,9 +29,11 @@ export class UploadedAudioService {
     if(!file){
       console.log('no file found')
     }
+    const jobKey = randomUUID();
     return this.audioQueue.add(
       PROCESS_AUDIO_JOB,
       { filePath: file.path,
+        jobKey,
         file: file,
       },
       {

@@ -1,44 +1,37 @@
-import { Process, Processor } from '@nestjs/bull';
-import { UploadedAudioService } from '../uploaded-audio/uploaded-audio.service';
-import { AUDIO_PROCESSING_QUEUE, PROCESS_AUDIO_JOB } from './queue-constants';
-import type { Job } from 'bull';
-import { DiarisationService } from '../diarisation/diarisation.service';
+import { Process, Processor, InjectQueue } from '@nestjs/bull';
+import type { Job, Queue } from 'bull';
+import { AUDIO_PROCESSING_QUEUE, PROCESS_AUDIO_JOB, TRANSCRIPTION_QUEUE, PROCESS_TRANSCRIPTION_JOB, DIARISATION_QUEUE, PROCESS_DIARISATION_JOB } from './queue-constants';
 
 interface AudioJobPayload{
   filePath: string;
+  jobKey: string;
 }
+
 @Processor(AUDIO_PROCESSING_QUEUE)
 export class AudioProcessor{
   constructor(
-    private readonly uploadedAudioService: UploadedAudioService, 
-    private readonly diarisationService: DiarisationService
+    @InjectQueue(TRANSCRIPTION_QUEUE)
+    private readonly transcriptionQueue: Queue,
+    @InjectQueue(DIARISATION_QUEUE)
+    private readonly diarisationQueue: Queue
   ){}
 
   @Process(PROCESS_AUDIO_JOB)
   async handleAudioJob(job: Job<AudioJobPayload>){
-    const filePath = job.data.filePath;
+    const { filePath, jobKey } = job.data;
     console.log("File is getting processed");
-    // await this.uploadedAudioService.transcribeAudio(filePath);
-    // const diarisation = await this.diarisationService.diariseAudio(filePath);
-    const [transcription, diarisation] = await Promise.all([
-      this.uploadedAudioService.transcribeAudio(filePath),
-      this.diarisationService.diariseAudio(filePath)
-    ])
-    // const count = Array.isArray(diarisation?.segments) ? diarisation.segments.length : 0;
-    // console.log(`Diarisation complete. segments=${count}`);
-    // console.log(diarisation.segments);
-
-    //merging the transcription with diarisation
-    const diarSegments = diarisation?.segments;
-    if(Array.isArray(diarSegments) && Array.isArray(transcription)){
-      const convSegment = await this.uploadedAudioService.mergeTranscriptionDiarisation(diarSegments, transcription);
-      console.log(convSegment);
-    }
-    else{
-      console.error('Error while processing audio');
-    }
-    
+    await Promise.all([
+      this.transcriptionQueue.add(
+        PROCESS_TRANSCRIPTION_JOB,
+        { filePath, jobKey },
+        { attempts: 3, backoff: { type: 'exponential', delay: 2000 } }
+      ),
+      this.diarisationQueue.add(
+        PROCESS_DIARISATION_JOB,
+        { filePath, jobKey },
+        { attempts: 3, backoff: { type: 'exponential', delay: 2000 } }
+      )
+    ]);
     return;
   }
-
 }
