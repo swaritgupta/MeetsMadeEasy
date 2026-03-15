@@ -41,6 +41,11 @@ export class AudioJobStateService {
     await this.writeJson(path.join(dir, 'diarisation.json'), diarisation);
   }
 
+  async storellmResponse(jobKey: string, llmResponse: unknown): Promise<void> {
+    const dir = this.ensureJobDir(jobKey);
+    await this.writeJson(path.join(dir, 'llmresponse.json'), llmResponse);
+  }
+
   async getTranscription<T>(jobKey: string): Promise<T | null> {
     const filePath = path.join(this.rootDir, jobKey, 'transcription.json');
     return this.readJson<T>(filePath);
@@ -48,6 +53,11 @@ export class AudioJobStateService {
 
   async getDiarisation<T>(jobKey: string): Promise<T | null> {
     const filePath = path.join(this.rootDir, jobKey, 'diarisation.json');
+    return this.readJson<T>(filePath);
+  }
+
+  async getllmResponse<T>(jobKey: string): Promise<T | null> {
+    const filePath = path.join(this.rootDir, jobKey, 'llmresponse.json');
     return this.readJson<T>(filePath);
   }
 
