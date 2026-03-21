@@ -1,5 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { GeminiClient } from '../utilities/GeminiClient';
+import { AuthService } from '../auth/auth.service';
+import { google } from 'googleapis';
 
 type Merged = { speaker: string; word: string; start: number; end: number };
 type MeetingSentiment = 'positive' | 'neutral' | 'tense';
@@ -47,7 +49,12 @@ type ParseResult = {
 export class LlmService {
   private readonly llmModel = process.env.LLM_MODEL || 'gemini-2.5-flash';
 
-  constructor(private readonly geminiClient: GeminiClient) {}
+  private readonly logger = new Logger(LlmService.name);
+
+  constructor(
+    private readonly geminiClient: GeminiClient,
+    private readonly authService: AuthService,
+  ) {}
 
   async generateAnswer(conv: Merged[]): Promise<LlmAnswerResult> {
     const prompt = this.buildPrompt(conv);
@@ -206,8 +213,60 @@ ${context}
     };
   }
 
-  async createDraft(email: EmailDraft){
+  async createDraft(email: EmailDraft, googleId?: string): Promise<{ id: string; message: { id: string } } | null> {
+    // Retrieve the user's OAuth tokens.
+    // If a googleId is provided, use it; otherwise fall back to the most recent user.
+    const user = googleId
+      ? await this.authService.getUserByGoogleId(googleId)
+      : await this.authService.getLatestUser();
 
+    if (!user) {
+      this.logger.warn('No authenticated user found — cannot create Gmail draft.');
+      return null;
+    }
+
+    // Build an OAuth2 client with the user's stored tokens.
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      process.env.GOOGLE_CALLBACK_URL,
+    );
+    oauth2Client.setCredentials({
+      access_token: user.accessToken,
+      refresh_token: user.refreshToken,
+    });
+
+    // Construct a raw RFC 2822 email and base64url-encode it.
+    const messageParts = [
+      `To: ${email.to}`,
+      `Subject: ${email.subject}`,
+      'Content-Type: text/plain; charset="UTF-8"',
+      '',
+      email.body,
+    ];
+    const rawMessage = messageParts.join('\n');
+    const encodedMessage = Buffer.from(rawMessage)
+      .toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+
+    const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+
+    try {
+      const response = await gmail.users.drafts.create({
+        userId: 'me',
+        requestBody: {
+          message: { raw: encodedMessage },
+        },
+      });
+
+      this.logger.log(`Gmail draft created: ${response.data.id}`);
+      return response.data as { id: string; message: { id: string } };
+    } catch (error) {
+      this.logger.error('Failed to create Gmail draft', error);
+      throw error;
+    }
   }
 
   private parseAndValidate(raw: string): ParseResult {

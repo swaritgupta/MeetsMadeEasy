@@ -1,5 +1,5 @@
 import { Processor, Process, InjectQueue } from "@nestjs/bull/lib/decorators";
-import { ACTION_QUEUE, EMAIL_QUEUE, PROCESS_ACTION_JOB, PROCESS_AUDIO_JOB } from "./queue-constants";
+import { ACTION_QUEUE, EMAIL_QUEUE, PROCESS_ACTION_JOB, PROCESS_AUDIO_JOB, PROCESS_EMAIL_JOB } from "./queue-constants";
 import type { MeetingSummaryOutput } from "../llm/llm.service";
 import type { Queue } from "bull";
 
@@ -15,7 +15,8 @@ export class ActionQueue{
       const type = this.intent(action.task);
       switch(type){
         case 'SCHEDULE':
-          await this.emailQueue.add(PROCESS_AUDIO_JOB, {
+        case 'EMAIL':
+          await this.emailQueue.add(PROCESS_EMAIL_JOB, {
             task:     action.task,
             assignee: action.assigned_to,
             context:  llmResponse.summary,   // give the email agent context

@@ -6,6 +6,7 @@ import { UploadedAudioModule } from '../uploaded-audio/uploaded-audio.module';
 import { BullModule } from '@nestjs/bull';
 import { HttpUtilModule } from '../utilities/http-util.module';
 import { MongooseModule } from '@nestjs/mongoose';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
@@ -19,9 +20,9 @@ import { MongooseModule } from '@nestjs/mongoose';
     MongooseModule.forRoot(
       process.env.MONGODB_URI ?? 'mongodb://localhost:27017/meets-made-easy',
     ),
+    AuthModule,
     UploadedAudioModule,
     HttpUtilModule,
-    
   ],
   controllers: [AppController],
   providers: [AppService],

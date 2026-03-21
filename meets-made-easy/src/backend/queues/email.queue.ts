@@ -30,8 +30,8 @@ export class EmailProcessor{
     });
 
     // Notify user that a draft is ready
-  //   await this.notificationService.notify(
-  //     `Email draft ready for your review: "${draft.subject}"`
-  //   );
+    // await this.notificationService.notify(
+    //   `Email draft ready for your review: "${draft.subject}"`
+    // );
    }
 }
