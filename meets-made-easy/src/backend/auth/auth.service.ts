@@ -8,7 +8,7 @@ export interface GoogleProfile {
   email: string;
   displayName: string;
   accessToken: string;
-  refreshToken: string;
+  refreshToken?: string;
 }
 
 @Injectable()
@@ -26,7 +26,10 @@ export class AuthService {
 
     if (existing) {
       existing.accessToken = profile.accessToken;
-      existing.refreshToken = profile.refreshToken || existing.refreshToken;
+      // Only update refreshToken if Google sends a new one — it only does so on first consent.
+      if (profile.refreshToken) {
+        existing.refreshToken = profile.refreshToken;
+      }
       existing.email = profile.email;
       existing.displayName = profile.displayName;
       return existing.save();
@@ -37,7 +40,7 @@ export class AuthService {
       email: profile.email,
       displayName: profile.displayName,
       accessToken: profile.accessToken,
-      refreshToken: profile.refreshToken,
+      refreshToken: profile.refreshToken, // may be undefined on first call without prior consent
     });
   }
 

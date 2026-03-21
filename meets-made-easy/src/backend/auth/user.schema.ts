@@ -17,8 +17,10 @@ export class User {
   @Prop({ required: true })
   accessToken!: string;
 
-  @Prop({ required: true })
-  refreshToken!: string;
+  // refreshToken is only provided by Google on the very first consent.
+  // It may be absent on subsequent logins, so it is optional here.
+  @Prop()
+  refreshToken?: string;
 
   createdAt?: Date;
 
