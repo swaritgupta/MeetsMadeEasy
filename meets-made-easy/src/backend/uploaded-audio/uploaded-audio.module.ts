@@ -11,9 +11,7 @@ import { LlmQueue } from '../queues/llm.queue';
 import { DiarisationService } from '../diarisation/diarisation.service';
 import { HttpUtilModule } from '../utilities/http-util.module';
 import { AudioJobStateService } from '../queues/audio-job-state.service';
-import { LlmService } from '../llm/llm.service';
-import { GeminiClient } from '../utilities/GeminiClient';
-import { LlmOutputService } from '../llm/llm-output.service';
+import { LlmModule } from '../llm/llm.module';
 
 @Module({
   imports: [
@@ -33,6 +31,7 @@ import { LlmOutputService } from '../llm/llm-output.service';
       name: LLM_QUEUE,
     }),
     HttpUtilModule,
+    LlmModule,
   ],
   controllers: [UploadedAudioController],
   providers: [
@@ -43,10 +42,7 @@ import { LlmOutputService } from '../llm/llm-output.service';
     MergeProcessor,
     LlmQueue,
     AudioJobStateService,
-    LlmService,
-    LlmOutputService,
-    GeminiClient,
-    DiarisationService
+    DiarisationService,
   ],
 })
 export class UploadedAudioModule {}

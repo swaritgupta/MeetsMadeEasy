@@ -5,6 +5,7 @@ import { LiveAudioModule } from '../live-audio/live-audio.module';
 import { UploadedAudioModule } from '../uploaded-audio/uploaded-audio.module';
 import { BullModule } from '@nestjs/bull';
 import { HttpUtilModule } from '../utilities/http-util.module';
+import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({
   imports: [
@@ -15,6 +16,9 @@ import { HttpUtilModule } from '../utilities/http-util.module';
         password: process.env.REDIS_PASSWORD || undefined,
       },
     }),
+    MongooseModule.forRoot(
+      process.env.MONGODB_URI ?? 'mongodb://localhost:27017/meets-made-easy',
+    ),
     UploadedAudioModule,
     HttpUtilModule,
     
