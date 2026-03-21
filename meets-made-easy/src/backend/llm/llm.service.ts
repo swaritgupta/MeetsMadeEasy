@@ -32,6 +32,12 @@ export type LlmAnswerResult = {
   usedRetry: boolean;
 };
 
+export type EmailDraft = {
+  to: string;
+  subject: string;
+  body: string;
+}
+
 type ParseResult = {
   parsed: MeetingSummaryOutput | null;
   parseError: string | null;
@@ -148,6 +154,60 @@ ${transcript}
 
     const result = await model.generateContent(prompt);
     return result.response.text()?.trim() ?? '';
+  }
+
+  async generateEmailDraft(task: string, context: string){
+    const prompt = `
+You are an assistant that drafts professional emails.
+
+Return ONLY valid JSON matching this exact schema:
+{
+  "to": "string",
+  "subject": "string",
+  "body": "string"
+}
+
+Instructions:
+- Use the task and context to draft a concise, polished email.
+- If the recipient is not specified, set "to" to an empty string.
+- Keep the subject clear and specific.
+- Write the body as plain text with natural paragraph breaks.
+- Do not wrap the JSON in markdown or code fences.
+
+TASK:
+${task}
+
+CONTEXT:
+${context}
+`;
+
+    const answer = await this.generateContent(prompt);
+    const parsed = this.tryParseJson(answer);
+
+    if (parsed && typeof parsed === 'object') {
+      const candidate = parsed as Record<string, unknown>;
+      const to = typeof candidate.to === 'string' ? candidate.to.trim() : '';
+      const subject = typeof candidate.subject === 'string' ? candidate.subject.trim() : '';
+      const body = typeof candidate.body === 'string' ? candidate.body.trim() : '';
+
+      if (subject && body) {
+        return {
+          to,
+          subject,
+          body,
+        };
+      }
+    }
+
+    return {
+      to: '',
+      subject: task.trim() || 'Meeting Follow-up',
+      body: answer || context || 'Unable to generate email draft.',
+    };
+  }
+
+  async createDraft(email: EmailDraft){
+
   }
 
   private parseAndValidate(raw: string): ParseResult {
