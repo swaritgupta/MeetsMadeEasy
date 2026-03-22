@@ -26,6 +26,7 @@ export class ActionQueue{
             task: action.task,
             assignee: action.assigned_to,
             context: summary,
+            deadline: action.deadline ?? undefined,
             meetingId,
           });
           break;
