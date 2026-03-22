@@ -1,7 +1,7 @@
 import { Process, Processor } from "@nestjs/bull";
 import type { Job } from "bull";
 import { EMAIL_QUEUE, PROCESS_EMAIL_JOB } from "./queue-constants";
-import { LlmService } from "../llm/llm.service";
+import { EmailService } from "../agent-services/email.service";
 
 interface EmailJobPayload{
   task: string,
@@ -10,7 +10,7 @@ interface EmailJobPayload{
 }
 @Processor(EMAIL_QUEUE)
 export class EmailProcessor{
-  constructor(private readonly llmService: LlmService){
+  constructor(private readonly emailService: EmailService){
 
   }
 
@@ -19,10 +19,10 @@ export class EmailProcessor{
     const { task, assignee, context } = job.data;
 
     // Use Gemini again to DRAFT the email body
-    const draft = await this.llmService.generateEmailDraft(task, context);
+    const draft = await this.emailService.generateEmailDraft(task, context);
 
     // Don't send automatically — save as draft for human review
-    await this.llmService.createDraft({
+    await this.emailService.createDraft({
       //to:      this.resolveEmail(assignee),  // map speaker → real email
       to: draft.to,
       subject: draft.subject,
