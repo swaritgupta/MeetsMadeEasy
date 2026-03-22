@@ -1,0 +1,68 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - ./meets-made-easy/.env
+    environment:
+      HOST: 0.0.0.0
+      PORT: 3000
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      DIARISATION_MS_URL: http://diarisation:8001
+      MONGO_URI: mongodb://mongo:27017/meetsmadeeasy
+    depends_on:
+      diarisation:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    volumes:
+      - app-data:/app/data
+      - app-outputs:/app/src/backend/llm/outputs
+    restart: unless-stopped
+
+  diarisation:
+    build:
+      context: ./diarisation-service
+      dockerfile: Dockerfile
+    env_file:
+      - ./diarisation-service/.env
+    ports:
+      - "8001:8001"
+    volumes:
+      - hf-cache:/root/.cache/huggingface
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:7-alpine
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.runCommand({ serverStatus: 1 }).ok"]  
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  app-data:
+  app-outputs:
+  hf-cache:
