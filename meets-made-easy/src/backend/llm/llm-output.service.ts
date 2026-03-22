@@ -8,7 +8,7 @@ import {
   MeetingActionItem,
   MeetingSummaryOutput,
 } from './llm.service';
-import { LlmOutput, LlmOutputDocument } from './schemas/llm-output.schema';
+import { LlmOutput, LlmOutputDocument } from '../schemas/llm-output.schema';
 
 @Injectable()
 export class LlmOutputService {
@@ -17,7 +17,7 @@ export class LlmOutputService {
   constructor(
     @InjectModel(LlmOutput.name)
     private readonly llmOutputModel: Model<LlmOutputDocument>,
-  ) {}
+  ) { }
 
   private ensureDir(): void {
     if (!fs.existsSync(this.outputDir)) {

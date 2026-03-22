@@ -18,6 +18,7 @@ import { CalendarQueue } from '../queues/calendar.queue';
 import { CalendarService } from '../agent-services/calendar.service';
 import { DateTimeParser } from '../utilities/DateTimeParser';
 import { AuthModule } from '../auth/auth.module';
+import { EmailService } from '../agent-services/email.service';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { AuthModule } from '../auth/auth.module';
     AudioJobStateService,
     DiarisationService,
     EmailProcessor,
+    EmailService,
     ActionQueue,
     CalendarQueue,
     CalendarService,
