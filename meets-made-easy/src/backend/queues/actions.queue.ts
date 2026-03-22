@@ -1,5 +1,5 @@
 import { Processor, Process, InjectQueue } from "@nestjs/bull";
-import { ACTION_QUEUE, EMAIL_QUEUE, PROCESS_ACTION_JOB, PROCESS_AUDIO_JOB, PROCESS_EMAIL_JOB } from "./queue-constants";
+import { ACTION_QUEUE, CALENDAR_QUEUE, EMAIL_QUEUE, PROCESS_ACTION_JOB, PROCESS_AUDIO_JOB, PROCESS_CALENDAR_JOB, PROCESS_EMAIL_JOB } from "./queue-constants";
 import type { MeetingSummaryOutput } from "../llm/llm.service";
 import type { Job, Queue } from "bull";
 
@@ -8,6 +8,8 @@ export class ActionQueue{
   constructor(
     @InjectQueue(EMAIL_QUEUE)
     private readonly emailQueue: Queue,
+    @InjectQueue(CALENDAR_QUEUE)
+    private readonly calendarQueue: Queue,
   ){}
   @Process(PROCESS_ACTION_JOB)
   async handleActionJob(job: Job<MeetingSummaryOutput & { meetingId: string }>){
@@ -20,6 +22,13 @@ export class ActionQueue{
       const type = this.intent(action.task);
       switch(type){
         case 'SCHEDULE':
+          await this.calendarQueue.add(PROCESS_CALENDAR_JOB, {
+            task: action.task,
+            assignee: action.assigned_to,
+            context: summary,
+            meetingId,
+          });
+          break;
         case 'EMAIL':
           await this.emailQueue.add(PROCESS_EMAIL_JOB, {
             task:     action.task,
