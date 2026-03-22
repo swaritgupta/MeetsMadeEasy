@@ -237,13 +237,18 @@ ${context}
     });
 
     // Construct a raw RFC 2822 email and base64url-encode it.
-    const messageParts = [
-      `To: ${email.to}`,
+    const messageParts: string[] = [];
+    // Only include the To header if it looks like a real email address.
+    // The LLM often returns a speaker name (e.g. "client") instead of an email.
+    if (email.to && email.to.includes('@')) {
+      messageParts.push(`To: ${email.to}`);
+    }
+    messageParts.push(
       `Subject: ${email.subject}`,
       'Content-Type: text/plain; charset="UTF-8"',
       '',
       email.body,
-    ];
+    );
     const rawMessage = messageParts.join('\n');
     const encodedMessage = Buffer.from(rawMessage)
       .toString('base64')

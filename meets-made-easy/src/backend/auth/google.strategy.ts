@@ -7,17 +7,14 @@ import { AuthService } from './auth.service';
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor(private readonly authService: AuthService) {
     super({
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: process.env.GOOGLE_CALLBACK_URL,
+      clientID: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      callbackURL: process.env.GOOGLE_CALLBACK_URL!,
       scope: [
         'email',
         'profile',
         'https://www.googleapis.com/auth/gmail.compose',
       ],
-      // accessType and prompt are valid Google OAuth2 params but not in the
-      // passport-google-oauth20 type definitions, so we spread them via cast.
-      ...({ accessType: 'offline', prompt: 'consent' } as any),
     });
   }
 

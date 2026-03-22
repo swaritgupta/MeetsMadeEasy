@@ -1,4 +1,4 @@
-import { Process, Processor } from "@nestjs/bull/lib/decorators";
+import { Process, Processor } from "@nestjs/bull";
 import type { Job } from "bull";
 import { EMAIL_QUEUE, PROCESS_EMAIL_JOB } from "./queue-constants";
 import { LlmService } from "../llm/llm.service";
