@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: app_container
     env_file:
       - ./meets-made-easy/.env
     environment:
@@ -11,7 +12,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       DIARISATION_MS_URL: http://diarisation:8001
-      MONGO_URI: mongodb://mongo:27017/meetsmadeeasy
+      MONGODB_URI: mongodb://mongo:27017/meetsmadeeasy
     depends_on:
       diarisation:
         condition: service_healthy
@@ -30,6 +31,7 @@ services:
     build:
       context: ./diarisation-service
       dockerfile: Dockerfile
+    container_name: diarisation_container
     env_file:
       - ./diarisation-service/.env
     ports:
@@ -46,6 +48,8 @@ services:
 
   redis:
     image: redis:7-alpine
+    container_name: redis_container
+    command: redis-server --requirepass 
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -54,12 +58,14 @@ services:
     restart: unless-stopped
 
   mongo:
-    image: mongo:7-alpine
+    image: mongo:7
+    container_name: mongo_container
     healthcheck:
-      test: ["CMD", "mongo", "--eval", "db.runCommand({ serverStatus: 1 }).ok"]  
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ ping: 1 }).ok"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 40s
     restart: unless-stopped
 
 volumes:
