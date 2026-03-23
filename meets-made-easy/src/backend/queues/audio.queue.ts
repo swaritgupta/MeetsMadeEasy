@@ -19,7 +19,7 @@ export class AudioProcessor{
   @Process(PROCESS_AUDIO_JOB)
   async handleAudioJob(job: Job<AudioJobPayload>){
     const { filePath, jobKey } = job.data;
-    console.log("File is getting processed");
+    console.log("Audio job is being processed");
     await Promise.all([
       this.transcriptionQueue.add(
         PROCESS_TRANSCRIPTION_JOB,

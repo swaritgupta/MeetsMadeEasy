@@ -27,6 +27,7 @@ export class TranscriptionProcessor{
     await this.jobState.storeTranscription(jobKey, transcription);
     const diarisation = await this.jobState.getDiarisation<DiarSeg[]>(jobKey);
     if (Array.isArray(diarisation)) {
+      console.log("Transcription and diarisation are ready, merging them from transcription queue");
       await this.tryEnqueueMerge(jobKey);
     }
     return;

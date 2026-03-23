@@ -34,6 +34,13 @@ services:
     container_name: diarisation_container
     env_file:
       - ./diarisation-service/.env
+    shm_size: "1gb"
+    deploy:
+      resources:
+        limits:
+          memory: 6g
+        reservations:
+          memory: 2g
     ports:
       - "8001:8001"
     volumes:
@@ -49,7 +56,7 @@ services:
   redis:
     image: redis:7-alpine
     container_name: redis_container
-    command: redis-server --requirepass 
+    command: redis-server --requirepass GlIt6I8nq2oEuh/LYqf7VWx/nZ+PGbctOIaIp71Krhw=
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -60,6 +67,9 @@ services:
   mongo:
     image: mongo:7
     container_name: mongo_container
+    command: ["mongod", "--quiet", "--logpath", "/dev/null"]
+    logging:
+      driver: "none"
     healthcheck:
       test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ ping: 1 }).ok"]
       interval: 10s

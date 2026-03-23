@@ -22,6 +22,7 @@ export class MergeProcessor{
 
   @Process(PROCESS_MERGE_JOB)
   async handleMerge(job: Job<MergeJobPayload>){
+    console.log("Merge job is being processed");
     const { jobKey } = job.data;
     const [diarisation, transcription] = await Promise.all([
       this.jobState.getDiarisation<DiarSeg[]>(jobKey),

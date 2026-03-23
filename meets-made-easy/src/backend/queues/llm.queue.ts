@@ -22,21 +22,24 @@ export class LlmQueue {
 
   @Process(PROCESS_LLM_JOB)
   async handleLLMJob(job: Job<LlmJobPayload>) {
+    console.log("LLM job is being processed");
     const { conv, jobKey } = job.data;
     const result = await this.llmService.generateAnswer(conv);
     const savedPath = await this.llmOutput.save(jobKey, result);
     const record = await this.llmOutput.saveToDb(jobKey, result);
-
+    console.log("LLM job completed");
     if (!result.parsed) {
       console.warn(`LLM response for ${jobKey} could not be parsed: ${result.parseError}`);
     }
     // After saving the LLM result:
+    console.log("Enqueuing action job");
     if (result.parsed) {
       await this.actionQueue.add(PROCESS_ACTION_JOB, {
         ...result.parsed,
         meetingId: jobKey,
       });
     }
+    console.log("Action job enqueued");
 
 
     console.log(`LLM result for ${jobKey} saved to: ${savedPath} (db id: ${record.id})`);

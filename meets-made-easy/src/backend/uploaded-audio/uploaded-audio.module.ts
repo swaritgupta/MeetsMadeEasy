@@ -19,6 +19,8 @@ import { CalendarService } from '../agent-services/calendar.service';
 import { DateTimeParser } from '../utilities/DateTimeParser';
 import { AuthModule } from '../auth/auth.module';
 import { EmailService } from '../agent-services/email.service';
+import { MongooseModule } from '@nestjs/mongoose';
+import { Calendar, CalendarSchema } from '../schemas/calendar.schema';
 
 @Module({
   imports: [
@@ -32,6 +34,7 @@ import { EmailService } from '../agent-services/email.service';
       { name: EMAIL_QUEUE },
       { name: CALENDAR_QUEUE },
     ),
+    MongooseModule.forFeature([{ name: Calendar.name, schema: CalendarSchema }]),
     HttpUtilModule,
     LlmModule,
     AuthModule,

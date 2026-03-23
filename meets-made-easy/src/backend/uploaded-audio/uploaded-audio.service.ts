@@ -25,7 +25,7 @@ export class UploadedAudioService {
     private readonly audioQueue: Queue,
   ){}
   async enqueueAudioFile(file: Express.Multer.File){
-    console.log('File is being processed')
+    console.log('Enqueueing audio file')
     if(!file){
       console.log('no file found')
     }
@@ -46,14 +46,12 @@ export class UploadedAudioService {
   }
 
   async transcribeAudio(filePath: string): Promise<TranscriptSeg[]>{
-    console.log('IM HERE')
     if(!filePath){
-      console.log('IM NOT HERE')
       throw new Error('Audio file is required!')
     }
     let tmpDir: string | null = null;
     try{
-      console.log("In transcribe audio")
+      console.log("Transcribing audio file")
       if (!fs.existsSync(filePath)) {
         throw new Error(`Audio file not found at path: ${filePath}`);
       }
@@ -98,8 +96,11 @@ export class UploadedAudioService {
         start: this.parseTimestampToSeconds(String(segment.start ?? '0:00:00.000')),
         end: this.parseTimestampToSeconds(String(segment.end ?? '0:00:00.000')),
       })).filter(seg => seg.text.length > 0 && seg.end > seg.start);
-      console.log("after result")
+
+      console.log("Transcription completed")
+
       return transcript;
+
     }catch(error){
       if (error instanceof Error) {
         throw error;
@@ -118,6 +119,7 @@ export class UploadedAudioService {
   }
 
   async mergeTranscriptionDiarisation(diar: DiarSeg[], transcript: TranscriptSeg[]){
+    console.log("Merging transcription and diarisation")
     const merged: Merged[] = [];
     for(const seg of transcript){
       const speaker = this.findSpeakerForSegment(seg, diar);
@@ -135,6 +137,8 @@ export class UploadedAudioService {
         });
       }
     }
+
+    console.log("Merging completed")
     return merged;
   }
 
