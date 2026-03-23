@@ -19,7 +19,7 @@ export class CalendarQueue {
   constructor(
     private readonly calendarService: CalendarService,
     private readonly dateTimeParser: DateTimeParser,
-  ) {}
+  ) { }
 
   @Process(PROCESS_CALENDAR_JOB)
   async handleCalendarJob(job: Job<CalendarJobPayload>) {
@@ -67,6 +67,14 @@ export class CalendarQueue {
 
     if (result) {
       this.logger.log(`Calendar event "${eventMeta.title}" created: ${result.id}`);
+      await this.calendarService.saveCalendarEvent({
+        from,
+        to,
+        title: eventMeta.title,
+        attendees: assignee ? [assignee] : [],
+        description: eventMeta.description,
+        meetingId: result.id ?? undefined,
+      });
     }
   }
 }

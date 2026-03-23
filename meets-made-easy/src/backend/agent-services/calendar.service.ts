@@ -2,6 +2,9 @@ import { Injectable, Logger } from "@nestjs/common";
 import { AuthService } from "../auth/auth.service";
 import { google } from 'googleapis';
 import { LlmService } from "../llm/llm.service";
+import { InjectModel } from "@nestjs/mongoose";
+import { Calendar, CalendarDocument } from "../schemas/calendar.schema";
+import { Model } from "mongoose";
 
 type CalendarEvent = {
   from: Date,
@@ -9,14 +12,17 @@ type CalendarEvent = {
   title: string,
   attendees: string[],
   description?: string,
+  meetingId?: string,
 }
 
 @Injectable()
 export class CalendarService{
   private readonly logger: Logger;
-  constructor(private readonly authService: AuthService, private readonly llmService: LlmService){
-
-  }
+  constructor(private readonly authService: AuthService, 
+    private readonly llmService: LlmService,
+    @InjectModel(Calendar.name)
+    private readonly calendarModel: Model<CalendarDocument>,
+  ){}
   
   private async getClient(googleId?: string){
     const user = googleId
@@ -106,5 +112,16 @@ export class CalendarService{
       throw error;
     }
 
+  }
+
+  async saveCalendarEvent(event: CalendarEvent){
+    return this.calendarModel.create({
+      meetingId: event.meetingId,
+      summary: event.title,
+      description: event.description,
+      startTime: event.from,
+      endTime: event.to,
+      attendees: event.attendees,
+    });
   }
 }
