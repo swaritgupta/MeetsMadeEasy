@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { UploadedAudioService } from './uploaded-audio.service';
 import { UploadedAudioController } from './uploaded-audio.controller';
 import { BullModule } from '@nestjs/bull';
-import { AUDIO_PROCESSING_QUEUE, TRANSCRIPTION_QUEUE, DIARISATION_QUEUE, MERGE_QUEUE, LLM_QUEUE, EMAIL_QUEUE, ACTION_QUEUE, CALENDAR_QUEUE } from '../queues/queue-constants';
+import { AUDIO_PROCESSING_QUEUE, TRANSCRIPTION_QUEUE, DIARISATION_QUEUE, MERGE_QUEUE, LLM_QUEUE, EMAIL_QUEUE, ACTION_QUEUE, CALENDAR_QUEUE, DOCUMENT_QUEUE } from '../queues/queue-constants';
 import { AudioProcessor } from '../queues/audio.queue';
 import { TranscriptionProcessor } from '../queues/transcription.queue';
 import { DiarisationProcessor } from '../queues/diarisation.queue';
@@ -21,6 +21,9 @@ import { AuthModule } from '../auth/auth.module';
 import { EmailService } from '../agent-services/email.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Calendar, CalendarSchema } from '../schemas/calendar.schema';
+import { DocumentQueue } from '../queues/document.queue';
+import { DocumentService } from '../agent-services/document.service';
+import { DocumentSchema } from '../schemas/document.schema';
 
 @Module({
   imports: [
@@ -33,8 +36,10 @@ import { Calendar, CalendarSchema } from '../schemas/calendar.schema';
       { name: ACTION_QUEUE },
       { name: EMAIL_QUEUE },
       { name: CALENDAR_QUEUE },
+      { name: DOCUMENT_QUEUE},
     ),
     MongooseModule.forFeature([{ name: Calendar.name, schema: CalendarSchema }]),
+    MongooseModule.forFeature([{ name: Document.name, schema: DocumentSchema }]),
     HttpUtilModule,
     LlmModule,
     AuthModule,
@@ -55,6 +60,8 @@ import { Calendar, CalendarSchema } from '../schemas/calendar.schema';
     CalendarQueue,
     CalendarService,
     DateTimeParser,
+    DocumentQueue,
+    DocumentService,
   ],
 })
 export class UploadedAudioModule {}

@@ -9,7 +9,7 @@ import { google } from "googleapis";
 interface DocumentEvent {
   title: string;
   content: string;
-  task: string;
+ 
 }
 @Injectable()
 export class DocumentService {
@@ -62,10 +62,10 @@ ${context}
 `;
   }
 
-  private async createDocument(document: DocumentEvent, meetingId: string, googleId?: string){
+   async createDocument(document: DocumentEvent, meetingId: string, googleId?: string){
     const oauth2Client = await this.getClient(googleId);
     if(!oauth2Client){
-      this.logger.warn('No authenticated user found - cannot create calendar event');
+      this.logger.warn('No authenticated user found - cannot create document');
       return null;
     }
     const docs = google.docs({ version: 'v1', auth: oauth2Client });
@@ -76,9 +76,24 @@ ${context}
         }
       });
       const documentId = response.data.documentId;
-      await docs.documents.batchUpdate({
-        
-      });
+      
+      if (documentId && document.content) {
+        await docs.documents.batchUpdate({
+          documentId: documentId,
+          requestBody: {
+            requests: [
+              {
+                insertText: {
+                  location: {
+                    index: 1, // Insert at the beginning of the document
+                  },
+                  text: document.content,
+                },
+              },
+            ],
+          },
+        });
+      }
       return response.data;
     }catch(error){
       this.logger.error('Failed to create document', error);
@@ -86,12 +101,12 @@ ${context}
     }
   }
 
-  private async saveDocument(document: DocumentEvent, meetingId: string){
+   async saveDocument(document: DocumentEvent, meetingId: string, task: string){
     return this.documentModel.create({
       meetingId,
       title: document.title,
       content: document.content,
-      task: document.task,
+      task: task,
     });
   }
   private async getClient(googleId?: string){

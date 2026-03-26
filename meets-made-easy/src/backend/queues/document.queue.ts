@@ -16,7 +16,13 @@ export class DocumentQueue{
   
   @Process(PROCESS_DOCUMENT_JOB)
   async handleDocumentJob(job: Job<DocumentJobData>){
-    const result = await this.documentService.createDocument(job.data);
+    const { task, context, meetingId } = job.data;
+    const doc = await this.documentService.generateDocument(task, context);
+    if(doc){
+      await this.documentService.createDocument(doc, meetingId);
+      await this.documentService.saveDocument(doc, meetingId, task);
+    }
+
     
   }
 }

@@ -58,7 +58,7 @@ export class ActionQueue{
     if (t.match(/email|send|write|draft|reply/))        return 'EMAIL';
     if (t.match(/create|ticket|issue|task|build|fix/)) return 'TASK';
     if (t.match(/post|notify|share|update|announce/))  return 'SLACK';
-    if (t.match(/create|document|draft|word|docs/)) return 'DOCUMENT';
+    if (t.match(/document|doc|report|summary|notes/)) return 'DOCUMENT';
     return 'TASK';
   }
 }
