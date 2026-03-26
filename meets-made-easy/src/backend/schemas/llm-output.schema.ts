@@ -32,7 +32,7 @@ export class LlmOutput {
   })
   actionItems!: ActionItem[];
 
-  @Prop({type: String })
+  @Prop({ type: String })
   parseError?: string | null;
 
   @Prop({ default: false })

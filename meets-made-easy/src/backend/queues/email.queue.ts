@@ -1,18 +1,16 @@
-import { Process, Processor } from "@nestjs/bull";
-import type { Job } from "bull";
-import { EMAIL_QUEUE, PROCESS_EMAIL_JOB } from "./queue-constants";
-import { EmailService } from "../agent-services/email.service";
+import { Process, Processor } from '@nestjs/bull';
+import type { Job } from 'bull';
+import { EMAIL_QUEUE, PROCESS_EMAIL_JOB } from './queue-constants';
+import { EmailService } from '../agent-services/email.service';
 
-interface EmailJobPayload{
-  task: string,
-  assignee: string,
-  context: string,
+interface EmailJobPayload {
+  task: string;
+  assignee: string;
+  context: string;
 }
 @Processor(EMAIL_QUEUE)
-export class EmailProcessor{
-  constructor(private readonly emailService: EmailService){
-
-  }
+export class EmailProcessor {
+  constructor(private readonly emailService: EmailService) {}
 
   @Process(PROCESS_EMAIL_JOB)
   async process(job: Job<EmailJobPayload>) {
@@ -26,12 +24,12 @@ export class EmailProcessor{
       //to:      this.resolveEmail(assignee),  // map speaker → real email
       to: draft.to,
       subject: draft.subject,
-      body:    draft.body,
+      body: draft.body,
     });
 
     // Notify user that a draft is ready
     // await this.notificationService.notify(
     //   `Email draft ready for your review: "${draft.subject}"`
     // );
-   }
+  }
 }

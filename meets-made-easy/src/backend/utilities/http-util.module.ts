@@ -7,11 +7,9 @@ import { HttpUtil } from './HttpUtil';
     HttpModule.register({
       timeout: 5000,
       maxRedirects: 5,
-    })
+    }),
   ],
-  providers: [
-    HttpUtil
-  ],
-  exports: [HttpUtil]
+  providers: [HttpUtil],
+  exports: [HttpUtil],
 })
 export class HttpUtilModule {}

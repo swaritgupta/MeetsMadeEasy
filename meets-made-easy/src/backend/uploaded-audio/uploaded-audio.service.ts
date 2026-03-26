@@ -7,35 +7,35 @@ import { promisify } from 'node:util';
 import { InjectQueue } from '@nestjs/bull';
 import type { Queue } from 'bull';
 import type { Express } from 'express';
-import { AUDIO_PROCESSING_QUEUE,PROCESS_AUDIO_JOB} from '../queues/queue-constants';
+import {
+  AUDIO_PROCESSING_QUEUE,
+  PROCESS_AUDIO_JOB,
+} from '../queues/queue-constants';
 import { randomUUID } from 'crypto';
 import { OpenAI } from 'openai';
 import { OpenAIClient } from '../utilities/OpenAIClient';
 import whisper from 'whisper-node';
-type DiarSeg = {speaker: string, start: number, end: number};
-type TranscriptSeg = {text: string, start: number, end: number};
-type Merged = {speaker: string, word: string, start: number, end: number};
+type DiarSeg = { speaker: string; start: number; end: number };
+type TranscriptSeg = { text: string; start: number; end: number };
+type Merged = { speaker: string; word: string; start: number; end: number };
 @Injectable()
 export class UploadedAudioService {
   //private readonly openAI = new OpenAIClient();
   private readonly execFileAsync = promisify(execFile);
-  
+
   constructor(
     @InjectQueue(AUDIO_PROCESSING_QUEUE)
     private readonly audioQueue: Queue,
-  ){}
-  async enqueueAudioFile(file: Express.Multer.File){
-    console.log('Enqueueing audio file')
-    if(!file){
-      console.log('no file found')
+  ) {}
+  async enqueueAudioFile(file: Express.Multer.File) {
+    console.log('Enqueueing audio file');
+    if (!file) {
+      console.log('no file found');
     }
     const jobKey = randomUUID();
     return this.audioQueue.add(
       PROCESS_AUDIO_JOB,
-      { filePath: file.path,
-        jobKey,
-        file: file,
-      },
+      { filePath: file.path, jobKey, file: file },
       {
         attempts: 3,
         backoff: { type: 'exponential', delay: 2000 },
@@ -45,13 +45,13 @@ export class UploadedAudioService {
     );
   }
 
-  async transcribeAudio(filePath: string): Promise<TranscriptSeg[]>{
-    if(!filePath){
-      throw new Error('Audio file is required!')
+  async transcribeAudio(filePath: string): Promise<TranscriptSeg[]> {
+    if (!filePath) {
+      throw new Error('Audio file is required!');
     }
     let tmpDir: string | null = null;
-    try{
-      console.log("Transcribing audio file")
+    try {
+      console.log('Transcribing audio file');
       if (!fs.existsSync(filePath)) {
         throw new Error(`Audio file not found at path: ${filePath}`);
       }
@@ -91,21 +91,26 @@ export class UploadedAudioService {
       if (!Array.isArray(transcription)) {
         throw new Error('Transcription failed to return segments.');
       }
-      const transcript = transcription.map((segment) => ({
-        text: String(segment.speech ?? '').trim(),
-        start: this.parseTimestampToSeconds(String(segment.start ?? '0:00:00.000')),
-        end: this.parseTimestampToSeconds(String(segment.end ?? '0:00:00.000')),
-      })).filter(seg => seg.text.length > 0 && seg.end > seg.start);
+      const transcript = transcription
+        .map((segment) => ({
+          text: String(segment.speech ?? '').trim(),
+          start: this.parseTimestampToSeconds(
+            String(segment.start ?? '0:00:00.000'),
+          ),
+          end: this.parseTimestampToSeconds(
+            String(segment.end ?? '0:00:00.000'),
+          ),
+        }))
+        .filter((seg) => seg.text.length > 0 && seg.end > seg.start);
 
-      console.log("Transcription completed")
+      console.log('Transcription completed');
 
       return transcript;
-
-    }catch(error){
+    } catch (error) {
       if (error instanceof Error) {
         throw error;
       }
-      throw new Error("transcription failed");
+      throw new Error('transcription failed');
     } finally {
       // Best-effort cleanup of temp wav and directory.
       try {
@@ -118,27 +123,29 @@ export class UploadedAudioService {
     }
   }
 
-  async mergeTranscriptionDiarisation(diar: DiarSeg[], transcript: TranscriptSeg[]){
-    console.log("Merging transcription and diarisation")
+  async mergeTranscriptionDiarisation(
+    diar: DiarSeg[],
+    transcript: TranscriptSeg[],
+  ) {
+    console.log('Merging transcription and diarisation');
     const merged: Merged[] = [];
-    for(const seg of transcript){
+    for (const seg of transcript) {
       const speaker = this.findSpeakerForSegment(seg, diar);
-      const last = merged[merged.length-1];
-      if(last && last.speaker===speaker){
+      const last = merged[merged.length - 1];
+      if (last && last.speaker === speaker) {
         last.word += ` ${seg.text}`;
         last.end = seg.end;
-      }
-      else{
+      } else {
         merged.push({
           speaker,
           word: seg.text,
           start: seg.start,
-          end: seg.end
+          end: seg.end,
         });
       }
     }
 
-    console.log("Merging completed")
+    console.log('Merging completed');
     return merged;
   }
 
@@ -148,21 +155,25 @@ export class UploadedAudioService {
       const fallback = Number(ts);
       return Number.isFinite(fallback) ? fallback : 0;
     }
-    const [hoursStr, minutesStr, secondsStr] = parts.length === 3 ? parts : ['0', parts[0], parts[1]];
+    const [hoursStr, minutesStr, secondsStr] =
+      parts.length === 3 ? parts : ['0', parts[0], parts[1]];
     const hours = Number(hoursStr);
     const minutes = Number(minutesStr);
     const seconds = Number(secondsStr);
     const h = Number.isFinite(hours) ? hours : 0;
     const m = Number.isFinite(minutes) ? minutes : 0;
     const s = Number.isFinite(seconds) ? seconds : 0;
-    return (h * 3600) + (m * 60) + s;
+    return h * 3600 + m * 60 + s;
   }
 
   private findSpeakerForSegment(seg: TranscriptSeg, diar: DiarSeg[]): string {
     let bestSpeaker = 'unknown';
     let bestOverlap = 0;
     for (const d of diar) {
-      const overlap = Math.max(0, Math.min(seg.end, d.end) - Math.max(seg.start, d.start));
+      const overlap = Math.max(
+        0,
+        Math.min(seg.end, d.end) - Math.max(seg.start, d.start),
+      );
       if (overlap > bestOverlap) {
         bestOverlap = overlap;
         bestSpeaker = d.speaker;

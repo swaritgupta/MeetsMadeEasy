@@ -6,8 +6,8 @@ export type CalendarDocument = HydratedDocument<Calendar>;
 @Schema({
   timestamps: true,
 })
-export class Calendar{
-  @Prop({unique: true, index: true})
+export class Calendar {
+  @Prop({ unique: true, index: true })
   meetingId: string;
 
   @Prop()
@@ -23,7 +23,7 @@ export class Calendar{
   endTime: Date;
 
   @Prop()
-  attendees?: string[]; 
+  attendees?: string[];
 
   createdAt?: Date;
 }

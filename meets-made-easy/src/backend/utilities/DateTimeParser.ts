@@ -80,8 +80,12 @@ Do not wrap in markdown or code fences.
 
       if (parsed && typeof parsed === 'object') {
         const candidate = parsed as Record<string, unknown>;
-        const startISO = typeof candidate.startISO === 'string' ? candidate.startISO.trim() : '';
-        const confidence = candidate.confidence === 'exact' ? 'exact' : 'inferred';
+        const startISO =
+          typeof candidate.startISO === 'string'
+            ? candidate.startISO.trim()
+            : '';
+        const confidence =
+          candidate.confidence === 'exact' ? 'exact' : 'inferred';
 
         // Validate that the ISO string is actually parseable
         if (startISO && !isNaN(new Date(startISO).getTime())) {

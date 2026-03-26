@@ -1,15 +1,15 @@
-import OpenAI from "openai";
+import OpenAI from 'openai';
 
-export class OpenAIClient{
+export class OpenAIClient {
   private openai!: OpenAI;
 
-  constructor(){
+  constructor() {
     this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY
+      apiKey: process.env.OPENAI_API_KEY,
     });
   }
 
-  public getObject(){
+  public getObject() {
     return this.openai;
   }
 }
