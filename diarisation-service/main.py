@@ -1,4 +1,6 @@
 import os
+os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
+
 import shutil
 import tempfile
 from pathlib import Path
@@ -34,6 +36,8 @@ def _load_pipeline() -> Pipeline:
         ) from exc
     if torch.cuda.is_available():
         pipeline.to(torch.device("cuda"))
+    elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+        pipeline.to(torch.device("mps"))
     return pipeline
 
 
