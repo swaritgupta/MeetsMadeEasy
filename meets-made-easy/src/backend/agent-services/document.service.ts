@@ -1,10 +1,40 @@
+import { InjectModel } from "@nestjs/mongoose";
 import { LlmService } from "../llm/llm.service";
+import { Document, DocumentDocument } from "../schemas/document.schema";
+import { Model } from "mongoose";
+import { AuthService } from "../auth/auth.service";
+import { Injectable, Logger } from "@nestjs/common";
+import { google } from "googleapis";
+
+interface DocumentEvent {
+  title: string;
+  content: string;
+  task: string;
+}
+@Injectable()
 export class DocumentService {
-  constructor(private readonly llmService: LlmService){}
-  async createDocument(task: string, context: string) {
+  private readonly logger = new Logger(DocumentService.name);
+  constructor(
+    private readonly llmService: LlmService,
+    private readonly authService: AuthService,
+    @InjectModel(Document.name)
+    private readonly documentModel: Model<DocumentDocument>,
+  ){}
+  async generateDocument(task: string, context: string) {
     const prompt = this.buildPrompt(task, context);
     const result = await this.llmService.generateContent(prompt);
-    
+    const parsed = this.llmService.tryParseJson(result);
+    if(parsed && typeof parsed === 'object'){
+      const candidate = parsed as Record<string, unknown>;
+      const title = typeof candidate.title === 'string' ? candidate.title.trim() : '';
+      const content = typeof candidate.content === 'string' ? candidate.content.trim() : '';
+      
+      return {
+        title,
+        content,
+      };
+    }
+    return null;
   }
 
   private buildPrompt(task: string, context: string) {
@@ -31,4 +61,62 @@ MEETING CONTEXT/SUMMARY:
 ${context}
 `;
   }
+
+  private async createDocument(document: DocumentEvent, meetingId: string, googleId?: string){
+    const oauth2Client = await this.getClient(googleId);
+    if(!oauth2Client){
+      this.logger.warn('No authenticated user found - cannot create calendar event');
+      return null;
+    }
+    const docs = google.docs({ version: 'v1', auth: oauth2Client });
+    try{
+      const response = await docs.documents.create({
+        requestBody: {
+          title: document.title,
+        }
+      });
+      const documentId = response.data.documentId;
+      await docs.documents.batchUpdate({
+        
+      });
+      return response.data;
+    }catch(error){
+      this.logger.error('Failed to create document', error);
+      throw error;
+    }
+  }
+
+  private async saveDocument(document: DocumentEvent, meetingId: string){
+    return this.documentModel.create({
+      meetingId,
+      title: document.title,
+      content: document.content,
+      task: document.task,
+    });
+  }
+  private async getClient(googleId?: string){
+    const user = googleId
+      ? await this.authService.getUserByGoogleId(googleId)
+      : await this.authService.getLatestUser();
+
+    if (!user) {
+      this.logger.warn('No authenticated user found — cannot create Gmail draft.');
+      return null;
+    }
+
+    // Build an OAuth2 client with the user's stored tokens.
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      process.env.GOOGLE_CALLBACK_URL,
+    );
+    oauth2Client.setCredentials({
+      access_token: user.accessToken,
+      refresh_token: user.refreshToken,
+    });
+
+    return oauth2Client;
+  }
+
+    
 }
