@@ -1,0 +1,10 @@
+Speaker 1 (Sarah): Welcome everyone. Today we need to align on the Q4 launch campaign for the new MeetsMadeEasy integration features.
+Speaker 2 (Mike): I've drafted some initial copy for the landing page, but we need the final visual assets from the design team before we can finalize the layout.
+Speaker 1 (Sarah): Understood. Mike, can you draft a Google Doc with the Q4 campaign messaging guidelines and share it with the design team so they have context?
+Speaker 2 (Mike): Yes, I'll get that messaging document drafted by tomorrow morning and share it.
+Speaker 3 (Emma): Once I have the document, I can start on the banner ads. Sarah, do we need to schedule a kickoff with the external agency?
+Speaker 1 (Sarah): Yes we do. Emma, please create a calendar event for an agency kickoff sync next Monday, and send an email to them with the agenda.
+Speaker 3 (Emma): Sure, I'll create the calendar invite for Monday and draft the email with the agenda for the agency today.
+Speaker 1 (Sarah): Also, we need to send an update to all stakeholders by the end of the week. Mike, can you take that on? Please write a summary email to send to the executive team with our current progress and launch timeline.
+Speaker 2 (Mike): No problem, I can write the summary email and send it out on Friday.
+Speaker 1 (Sarah): Perfect, let's reconvene on Thursday to review the designs. Thanks everyone.

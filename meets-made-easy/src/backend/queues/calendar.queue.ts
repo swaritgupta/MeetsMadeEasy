@@ -33,10 +33,9 @@ export class CalendarQueue {
       return;
     }
 
-    // 2. Resolve the deadline (or task text) into a concrete start time
-    //    Try the deadline first; fall back to scanning the task text itself.
-    const dateSource = deadline || task;
-    const parsed = await this.dateTimeParser.parse(dateSource, context);
+    // 2. Resolve the meeting time from the task text. 
+    //    We should NOT use the 'deadline', because that's when the action item is due, not the meeting!
+    const parsed = await this.dateTimeParser.parse(task, context);
 
     let from: Date;
     let to: Date;
@@ -46,11 +45,11 @@ export class CalendarQueue {
       from = range.from;
       to = range.to;
       this.logger.log(
-        `Resolved date "${dateSource}" → ${from.toISOString()} (confidence: ${parsed.confidence})`,
+        `Resolved date from task "${task}" → ${from.toISOString()} (confidence: ${parsed.confidence})`,
       );
     } else {
       // Fallback: schedule for tomorrow at 10 AM if we can't parse any date
-      this.logger.warn(`Could not parse date from "${dateSource}" — defaulting to tomorrow 10 AM`);
+      this.logger.warn(`Could not parse date from task — defaulting to tomorrow 10 AM`);
       from = new Date();
       from.setDate(from.getDate() + 1);
       from.setHours(10, 0, 0, 0);
@@ -62,7 +61,8 @@ export class CalendarQueue {
       from,
       to,
       title: eventMeta.title,
-      attendees: assignee ? [assignee] : [],
+      // Note: assignee is the person doing the task (e.g. SPEAKER_01), not an attendee email.
+      attendees: [],
       description: eventMeta.description,
     });
 
@@ -72,7 +72,7 @@ export class CalendarQueue {
         from,
         to,
         title: eventMeta.title,
-        attendees: assignee ? [assignee] : [],
+        attendees: [],
         description: eventMeta.description,
         meetingId: result.id ?? undefined,
       });

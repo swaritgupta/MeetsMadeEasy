@@ -54,11 +54,19 @@ export class ActionQueue{
 
   private intent(task: string){
     const t = task.toLowerCase();
-    if (t.match(/schedule|call|meeting|book|set up/))  return 'SCHEDULE';
-    if (t.match(/email|send|write|draft|reply/))        return 'EMAIL';
+    
+    // Strongest signals first
+    if (t.match(/calendar|event|schedule|invite|book a meeting/)) return 'SCHEDULE';
+    if (t.match(/doc|document/)) return 'DOCUMENT';
+    if (t.match(/email/)) return 'EMAIL';
+    
+    // Fallbacks for vague verbs
+    if (t.match(/write|draft|send|reply/)) return 'EMAIL';
+    if (t.match(/report|summary|notes/)) return 'DOCUMENT';
+    
     if (t.match(/create|ticket|issue|task|build|fix/)) return 'TASK';
     if (t.match(/post|notify|share|update|announce/))  return 'SLACK';
-    if (t.match(/document|doc|report|summary|notes/)) return 'DOCUMENT';
+    
     return 'TASK';
   }
 }

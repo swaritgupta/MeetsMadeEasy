@@ -1,0 +1,57 @@
+[
+  {
+    "speaker": "Speaker 1 (Alice)",
+    "text": "Hi everyone, let's kick off the Q3 planning meeting. We have a few key deliverables to discuss today, mainly the new authentication service and the database migration.",
+    "timestamp": "00:00:00"
+  },
+  {
+    "speaker": "Speaker 2 (Bob)",
+    "text": "Sounds good. For the authentication service, we're planning to migrate from our custom JWT setup to a managed OAuth2.0 provider. I've been evaluating a few options, and I think Auth0 is the best fit for our timeline.",
+    "timestamp": "00:00:15"
+  },
+  {
+    "speaker": "Speaker 3 (Charlie)",
+    "text": "If we do go with Auth0, we need to update all our existing Express middleware. It shouldn't take more than a week, though.",
+    "timestamp": "00:00:30"
+  },
+  {
+    "speaker": "Speaker 1 (Alice)",
+    "text": "Okay, Bob, can you create a design document for the Auth0 migration by this Friday? We'll need a Google Doc for the team to review.",
+    "timestamp": "00:00:45"
+  },
+  {
+    "speaker": "Speaker 2 (Bob)",
+    "text": "Sure, I'll write up the Auth0 design doc and share it by Friday. Charlie, can you write an email to the broader backend team summarizing the necessary middleware updates? Let's make sure everyone is aware of the changes.",
+    "timestamp": "00:01:00"
+  },
+  {
+    "speaker": "Speaker 3 (Charlie)",
+    "text": "Will do. I'll send out that email to the backend group today.",
+    "timestamp": "00:01:15"
+  },
+  {
+    "speaker": "Speaker 1 (Alice)",
+    "text": "Great. Now, on the database migration, we're moving the analytics service from MongoDB to PostgreSQL.",
+    "timestamp": "00:01:25"
+  },
+  {
+    "speaker": "Speaker 4 (Diana)",
+    "text": "I've already prepared the new schema. We just need to schedule the production downtime. I suggest next Saturday at 2 AM.",
+    "timestamp": "00:01:35"
+  },
+  {
+    "speaker": "Speaker 1 (Alice)",
+    "text": "Perfect. Diana, please create a calendar event for the database migration downtime next Saturday at 2 AM and invite the whole engineering team. Also, please generate a Google Doc outlining the rollback strategy just in case something goes wrong with the migration.",
+    "timestamp": "00:01:50"
+  },
+  {
+    "speaker": "Speaker 4 (Diana)",
+    "text": "Got it. I'll create the calendar invite and the rollback strategy Google Doc by tomorrow afternoon.",
+    "timestamp": "00:02:10"
+  },
+  {
+    "speaker": "Speaker 1 (Alice)",
+    "text": "Excellent. Let's wrap up here. See you all at the standup tomorrow.",
+    "timestamp": "00:02:20"
+  }
+]

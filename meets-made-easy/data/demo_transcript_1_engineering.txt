@@ -1,0 +1,11 @@
+Speaker 1 (Alice): Hi everyone, let's kick off the Q3 planning meeting. We have a few key deliverables to discuss today, mainly the new authentication service and the database migration.
+Speaker 2 (Bob): Sounds good. For the authentication service, we're planning to migrate from our custom JWT setup to a managed OAuth2.0 provider. I've been evaluating a few options, and I think Auth0 is the best fit for our timeline.
+Speaker 3 (Charlie): If we do go with Auth0, we need to update all our existing Express middleware. It shouldn't take more than a week, though.
+Speaker 1 (Alice): Okay, Bob, can you create a design document for the Auth0 migration by this Friday? We'll need a Google Doc for the team to review.
+Speaker 2 (Bob): Sure, I'll write up the Auth0 design doc and share it by Friday. Charlie, can you write an email to the broader backend team summarizing the necessary middleware updates? Let's make sure everyone is aware of the changes.
+Speaker 3 (Charlie): Will do. I'll send out that email to the backend group today.
+Speaker 1 (Alice): Great. Now, on the database migration, we're moving the analytics service from MongoDB to PostgreSQL.
+Speaker 4 (Diana): I've already prepared the new schema. We just need to schedule the production downtime. I suggest next Saturday at 2 AM.
+Speaker 1 (Alice): Perfect. Diana, please create a calendar event for the database migration downtime next Saturday at 2 AM and invite the whole engineering team. Also, please generate a Google Doc outlining the rollback strategy just in case something goes wrong with the migration.
+Speaker 4 (Diana): Got it. I'll create the calendar invite and the rollback strategy Google Doc by tomorrow afternoon.
+Speaker 1 (Alice): Excellent. Let's wrap up here. See you all at the standup tomorrow.

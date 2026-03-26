@@ -23,7 +23,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Calendar, CalendarSchema } from '../schemas/calendar.schema';
 import { DocumentQueue } from '../queues/document.queue';
 import { DocumentService } from '../agent-services/document.service';
-import { DocumentSchema } from '../schemas/document.schema';
+import { Document, DocumentSchema } from '../schemas/document.schema';
 
 @Module({
   imports: [
