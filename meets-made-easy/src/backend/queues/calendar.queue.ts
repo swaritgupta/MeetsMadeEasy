@@ -23,6 +23,7 @@ export class CalendarQueue {
 
   @Process(PROCESS_CALENDAR_JOB)
   async handleCalendarJob(job: Job<CalendarJobPayload>) {
+    console.log("Calendar job is being processed");
     const { task, assignee, context, deadline } = job.data;
 
     // 1. Ask Gemini to generate event metadata (title, description, duration)

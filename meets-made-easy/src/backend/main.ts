@@ -5,6 +5,10 @@ import * as dotenv from 'dotenv';
 import { connectRedis } from './utilities/RedisClient';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as dns from 'dns';
+
+// Fix Node 18+ DNS resolution for IPv6 hanging (googleapis.com timeout)
+dns.setDefaultResultOrder('ipv4first');
 
 const banner = async (name: string) => {
   return new Promise((resolve, reject) => {

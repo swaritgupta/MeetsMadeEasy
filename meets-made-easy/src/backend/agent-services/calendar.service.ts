@@ -10,14 +10,14 @@ type CalendarEvent = {
   from: Date,
   to: Date,
   title: string,
-  attendees: string[],
+  attendees?: string[],
   description?: string,
   meetingId?: string,
 }
 
 @Injectable()
 export class CalendarService{
-  private readonly logger: Logger;
+  private readonly logger = new Logger(CalendarService.name);
   constructor(private readonly authService: AuthService, 
     private readonly llmService: LlmService,
     @InjectModel(Calendar.name)
@@ -84,14 +84,33 @@ export class CalendarService{
     return null;
   }
 
+  private normalizeAttendees(attendees?: string[]): string[] {
+    if (!Array.isArray(attendees) || attendees.length === 0) {
+      return [];
+    }
+
+    return attendees
+      .map((email) => email.trim())
+      .filter((email) => this.isValidEmail(email));
+  }
+
+  private isValidEmail(email: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
   async createCalendarEvent(event: CalendarEvent, googleId?: string){
     const oauth2Client = await this.getClient(googleId);
     if(!oauth2Client){
       this.logger.warn('No authenticated user found - cannot create calendar event');
       return null;
     }
-
     const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+    const attendees = this.normalizeAttendees(event.attendees);
+    const hasAttendees = attendees.length > 0;
+
+    if ((event.attendees?.length ?? 0) > 0 && !hasAttendees) {
+      this.logger.warn('Dropping invalid attendee values before creating calendar event');
+    }
 
     try {
       const response = await calendar.events.insert({
@@ -101,7 +120,7 @@ export class CalendarService{
           description: event.description,
           start: { dateTime: event.from.toISOString() },
           end: { dateTime: event.to.toISOString() },
-          attendees: event.attendees.map((email) => ({ email })),
+          ...(hasAttendees ? { attendees: attendees.map((email) => ({ email })) } : {}),
         },
       });
 
@@ -115,13 +134,15 @@ export class CalendarService{
   }
 
   async saveCalendarEvent(event: CalendarEvent){
+    const attendees = this.normalizeAttendees(event.attendees);
+
     return this.calendarModel.create({
       meetingId: event.meetingId,
       summary: event.title,
       description: event.description,
       startTime: event.from,
       endTime: event.to,
-      attendees: event.attendees,
+      attendees,
     });
   }
 }
