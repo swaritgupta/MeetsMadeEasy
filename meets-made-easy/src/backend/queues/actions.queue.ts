@@ -1,5 +1,5 @@
 import { Processor, Process, InjectQueue } from "@nestjs/bull";
-import { ACTION_QUEUE, CALENDAR_QUEUE, EMAIL_QUEUE, PROCESS_ACTION_JOB, PROCESS_AUDIO_JOB, PROCESS_CALENDAR_JOB, PROCESS_EMAIL_JOB } from "./queue-constants";
+import { ACTION_QUEUE, CALENDAR_QUEUE, EMAIL_QUEUE, PROCESS_ACTION_JOB, PROCESS_AUDIO_JOB, PROCESS_CALENDAR_JOB, PROCESS_DOCUMENT_JOB, PROCESS_EMAIL_JOB } from "./queue-constants";
 import type { MeetingSummaryOutput } from "../llm/llm.service";
 import type { Job, Queue } from "bull";
 
@@ -38,6 +38,8 @@ export class ActionQueue{
             meetingId,
           });
           break;
+        case 'DOCUMENT':
+          
       }
     }
   }
@@ -48,6 +50,7 @@ export class ActionQueue{
     if (t.match(/email|send|write|draft|reply/))        return 'EMAIL';
     if (t.match(/create|ticket|issue|task|build|fix/)) return 'TASK';
     if (t.match(/post|notify|share|update|announce/))  return 'SLACK';
+    if (t.match(/create|document|draft|word|docs/)) return 'DOCUMENT';
     return 'TASK';
   }
 }
