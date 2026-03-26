@@ -62,7 +62,7 @@ ${context}
 `;
   }
 
-   async createDocument(document: DocumentEvent, meetingId: string, googleId?: string){
+   async createDocument(document: DocumentEvent, meetingId: string, googleId: string){
     const oauth2Client = await this.getClient(googleId);
     if(!oauth2Client){
       this.logger.warn('No authenticated user found - cannot create document');
@@ -109,11 +109,11 @@ ${context}
       task: task,
     });
   }
-  private async getClient(googleId?: string){
-    const user = googleId
-      ? await this.authService.getUserByGoogleId(googleId)
-      : await this.authService.getLatestUser();
-
+  private async getClient(googleId: string){
+    // const user = googleId
+    //   ? await this.authService.getUserByGoogleId(googleId)
+    //   : await this.authService.getLatestUser();
+    const user = await this.authService.getUserByGoogleId(googleId)
     if (!user) {
       this.logger.warn('No authenticated user found — cannot create Gmail draft.');
       return null;

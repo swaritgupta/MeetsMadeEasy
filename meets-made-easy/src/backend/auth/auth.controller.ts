@@ -13,12 +13,14 @@ export class AuthController {
     // Tokens are saved by the GoogleStrategy.validate() method.
     // Store the googleId in a cookie so we can identify the user in later requests.
     const user = req.user;
+    console.log('user info:::', user);
     if (user?.googleId) {
       res.cookie('googleId', user.googleId, {
         httpOnly: true,
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
     }
+    
     res.redirect('/dashboard');
   }
 }
