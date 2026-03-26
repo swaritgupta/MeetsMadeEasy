@@ -1,5 +1,5 @@
 import { Processor, Process, InjectQueue } from "@nestjs/bull";
-import { ACTION_QUEUE, CALENDAR_QUEUE, EMAIL_QUEUE, PROCESS_ACTION_JOB, PROCESS_AUDIO_JOB, PROCESS_CALENDAR_JOB, PROCESS_DOCUMENT_JOB, PROCESS_EMAIL_JOB } from "./queue-constants";
+import { ACTION_QUEUE, CALENDAR_QUEUE, DOCUMENT_QUEUE, EMAIL_QUEUE, PROCESS_ACTION_JOB, PROCESS_AUDIO_JOB, PROCESS_CALENDAR_JOB, PROCESS_DOCUMENT_JOB, PROCESS_EMAIL_JOB } from "./queue-constants";
 import type { MeetingSummaryOutput } from "../llm/llm.service";
 import type { Job, Queue } from "bull";
 
@@ -10,17 +10,19 @@ export class ActionQueue{
     private readonly emailQueue: Queue,
     @InjectQueue(CALENDAR_QUEUE)
     private readonly calendarQueue: Queue,
+    @InjectQueue(DOCUMENT_QUEUE)
+    private readonly documentQueue: Queue,
   ){}
   @Process(PROCESS_ACTION_JOB)
-  async handleActionJob(job: Job<MeetingSummaryOutput & { meetingId: string }>){
+  async handleActionJob(job: Job<MeetingSummaryOutput & { meetingId: string }>) {
     const { meetingId, action_items, summary } = job.data;
     if (!Array.isArray(action_items)) {
       return;
     }
 
-    for(const action of action_items){
+    for (const action of action_items) {
       const type = this.intent(action.task);
-      switch(type){
+      switch (type) {
         case 'SCHEDULE':
           await this.calendarQueue.add(PROCESS_CALENDAR_JOB, {
             task: action.task,
@@ -32,14 +34,20 @@ export class ActionQueue{
           break;
         case 'EMAIL':
           await this.emailQueue.add(PROCESS_EMAIL_JOB, {
-            task:     action.task,
+            task: action.task,
             assignee: action.assigned_to,
-            context:  summary,   // give the email agent context
+            context: summary,   // give the email agent context
             meetingId,
           });
           break;
         case 'DOCUMENT':
-          
+          await this.documentQueue.add(PROCESS_DOCUMENT_JOB, {
+            task: action.task,
+            assignee: action.assigned_to,
+            context: summary,
+            meetingId,
+          });
+          break;
       }
     }
   }
