@@ -46,7 +46,7 @@ type ParseResult = {
 
 @Injectable()
 export class LlmService {
-  private readonly llmModel = process.env.LLM_MODEL || 'gemini-2.5-pro';
+  private readonly llmModel = process.env.LLM_MODEL || 'gemini-2.5-flash';
 
   constructor(private readonly geminiClient: GeminiClient) {}
 

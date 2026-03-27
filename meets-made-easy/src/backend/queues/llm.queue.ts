@@ -32,7 +32,7 @@ export class LlmQueue {
     const { conv, jobKey, googleId } = job.data;
     const result = await this.llmService.generateAnswer(conv);
     const savedPath = await this.llmOutput.save(jobKey, result);
-    const record = await this.llmOutput.saveToDb(jobKey, result);
+    const record = await this.llmOutput.saveToDb(jobKey, result, googleId);
     console.log('LLM job completed');
     if (!result.parsed) {
       console.warn(

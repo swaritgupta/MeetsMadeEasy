@@ -1,6 +1,5 @@
 import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
 import { GoogleOAuthGuard } from './google-auth/google-oauth.guard';
-import { session } from 'express-session';
 
 @Controller('auth')
 export class AuthController {
@@ -11,16 +10,13 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(GoogleOAuthGuard)
   googleCallback(@Req() req, @Res() res) {
-    // Tokens are saved by the GoogleStrategy.validate() method.
-    // Store the googleId in a cookie so we can identify the user in later requests.
+    // Tokens are saved by GoogleStrategy.validate().
+    // Persist googleId in session for subsequent authenticated API calls.
     const user = req.user;
-    console.log('user info:::', user);
     if (user?.googleId) {
-      req.session.userId = user.googleId; // or user id
-      // res.cookie('googleId', user.googleId, {
-      //   httpOnly: true,
-      //   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      // });
+      // Keep `userId` for backward compatibility while introducing explicit key.
+      req.session.userId = user.googleId;
+      req.session.googleId = user.googleId;
     }
 
     res.redirect('/dashboard');

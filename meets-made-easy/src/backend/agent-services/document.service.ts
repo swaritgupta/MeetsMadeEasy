@@ -106,9 +106,15 @@ ${context}
     }
   }
 
-  async saveDocument(document: DocumentEvent, meetingId: string, task: string) {
+  async saveDocument(
+    document: DocumentEvent,
+    meetingId: string,
+    task: string,
+    googleId?: string,
+  ) {
     return this.documentModel.create({
       meetingId,
+      googleId,
       title: document.title,
       content: document.content,
       task: task,

@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { Processor, Process, InjectQueue } from '@nestjs/bull';
 import {
   ACTION_QUEUE,
@@ -15,6 +16,8 @@ import type { Job, Queue } from 'bull';
 
 @Processor(ACTION_QUEUE)
 export class ActionQueue {
+  private readonly logger = new Logger(ActionQueue.name);
+
   constructor(
     @InjectQueue(EMAIL_QUEUE)
     private readonly emailQueue: Queue,
@@ -28,6 +31,13 @@ export class ActionQueue {
     job: Job<MeetingSummaryOutput & { meetingId: string; googleId?: string }>,
   ) {
     const { meetingId, action_items, summary, googleId } = job.data;
+    const normalizedGoogleId = googleId?.trim();
+    if (!normalizedGoogleId) {
+      this.logger.warn(
+        `Skipping action dispatch for meeting "${meetingId}" because googleId is missing`,
+      );
+      return;
+    }
     if (!Array.isArray(action_items)) {
       return;
     }
@@ -42,7 +52,7 @@ export class ActionQueue {
             context: summary,
             deadline: action.deadline ?? undefined,
             meetingId,
-            googleId,
+            googleId: normalizedGoogleId,
           });
           break;
         case 'EMAIL':
@@ -51,7 +61,7 @@ export class ActionQueue {
             assignee: action.assigned_to,
             context: summary, // give the email agent context
             meetingId,
-            googleId,
+            googleId: normalizedGoogleId,
           });
           break;
         case 'DOCUMENT':
@@ -60,7 +70,7 @@ export class ActionQueue {
             assignee: action.assigned_to,
             context: summary,
             meetingId,
-            googleId,
+            googleId: normalizedGoogleId,
           });
           break;
       }

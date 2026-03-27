@@ -23,6 +23,13 @@ export class DocumentQueue {
     this.logger.log(
       `Document job is being processed for task: "${job.data.task}"`,
     );
+    const googleId = job.data.googleId?.trim();
+    if (!googleId) {
+      this.logger.warn(
+        `Skipping document creation for task "${job.data.task}" because googleId is missing`,
+      );
+      return;
+    }
     const { task, context, meetingId } = job.data;
     const doc = await this.documentService.generateDocument(task, context);
     if (doc) {
@@ -30,14 +37,14 @@ export class DocumentQueue {
       const createdDoc = await this.documentService.createDocument(
         doc,
         meetingId,
-        job.data.googleId ?? '',
+        googleId,
       );
       if (createdDoc?.documentId) {
         this.logger.log(
           `Google Document successfully created with ID: ${createdDoc.documentId}`,
         );
       }
-      await this.documentService.saveDocument(doc, meetingId, task);
+      await this.documentService.saveDocument(doc, meetingId, task, googleId);
     } else {
       this.logger.warn(
         `Failed to generate document content for task: "${task}"`,

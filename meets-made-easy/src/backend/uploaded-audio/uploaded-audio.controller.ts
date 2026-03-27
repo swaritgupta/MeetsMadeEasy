@@ -7,6 +7,7 @@ import {
   Post,
   Req,
   Res,
+  UnauthorizedException,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -48,14 +49,19 @@ export class UploadedAudioController {
     }),
   )
   async uploadAudio(
-    @UploadedFile() file: Express.Multer.File,
-    @Req() req: Request,
-    @Res() res: Response,
-  ) {
+    @UploadedFile() file: Express.Multer.File, @Req() req: Request, @Res() res: Response) {
     if (!file) {
       throw new BadRequestException('File is required');
     }
-    const result = await this.uploadedAudioService.enqueueAudioFile(file);
+    const requestUser = (req as any).user as { googleId?: string } | undefined;
+    const session = (req as any).session as
+      | { googleId?: string; userId?: string }
+      | undefined;
+    const googleId = requestUser?.googleId ?? session?.googleId ?? session?.userId;
+    if (!googleId) {
+      throw new UnauthorizedException('Authentication required');
+    }
+    const result = await this.uploadedAudioService.enqueueAudioFile(file, googleId);
     return res.status(200).json({ message: 'Audio file uploaded', result });
   }
 }

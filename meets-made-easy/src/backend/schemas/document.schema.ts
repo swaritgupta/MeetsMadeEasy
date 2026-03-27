@@ -19,6 +19,9 @@ export class Document {
   @Prop({ required: true, index: true })
   meetingId!: string;
 
+  @Prop({ index: true })
+  googleId?: string;
+
   createdAt?: Date;
 
   updatedAt?: Date;

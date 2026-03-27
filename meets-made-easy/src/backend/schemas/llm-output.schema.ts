@@ -14,6 +14,9 @@ export class LlmOutput {
   @Prop({ required: true, index: true })
   jobKey!: string;
 
+  @Prop({ index: true })
+  googleId?: string;
+
   @Prop()
   model?: string;
 

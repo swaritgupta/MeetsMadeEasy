@@ -10,6 +10,9 @@ export class Calendar {
   @Prop({ unique: true, index: true })
   meetingId: string;
 
+  @Prop({ index: true })
+  googleId?: string;
+
   @Prop()
   summary: string;
 

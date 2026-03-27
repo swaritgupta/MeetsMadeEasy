@@ -13,6 +13,7 @@ type CalendarEvent = {
   attendees?: string[];
   description?: string;
   meetingId?: string;
+  googleId?: string;
 };
 
 @Injectable()
@@ -158,6 +159,7 @@ export class CalendarService {
 
     return this.calendarModel.create({
       meetingId: event.meetingId,
+      googleId: event.googleId,
       summary: event.title,
       description: event.description,
       startTime: event.from,

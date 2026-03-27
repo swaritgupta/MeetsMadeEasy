@@ -27,7 +27,7 @@ export class UploadedAudioService {
     @InjectQueue(AUDIO_PROCESSING_QUEUE)
     private readonly audioQueue: Queue,
   ) {}
-  async enqueueAudioFile(file: Express.Multer.File, googleId?: string) {
+  async enqueueAudioFile(file: Express.Multer.File, googleId: string) {
     console.log('Enqueueing audio file');
     if (!file) {
       console.log('no file found');

@@ -25,6 +25,13 @@ export class CalendarQueue {
   @Process(PROCESS_CALENDAR_JOB)
   async handleCalendarJob(job: Job<CalendarJobPayload>) {
     console.log('Calendar job is being processed');
+    const googleId = job.data.googleId?.trim();
+    if (!googleId) {
+      this.logger.warn(
+        `Skipping calendar event creation for task "${job.data.task}" because googleId is missing`,
+      );
+      return;
+    }
     const { task, assignee, context, deadline } = job.data;
 
     // 1. Ask Gemini to generate event metadata (title, description, duration)
@@ -78,7 +85,7 @@ export class CalendarQueue {
         attendees: [],
         description: eventMeta.description,
       },
-      job.data.googleId ?? '',
+      googleId,
     );
 
     if (result) {
@@ -92,6 +99,7 @@ export class CalendarQueue {
         attendees: [],
         description: eventMeta.description,
         meetingId: result.id ?? undefined,
+        googleId,
       });
     }
   }

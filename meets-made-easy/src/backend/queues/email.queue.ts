@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { Process, Processor } from '@nestjs/bull';
 import type { Job } from 'bull';
 import { EMAIL_QUEUE, PROCESS_EMAIL_JOB } from './queue-constants';
@@ -11,11 +12,20 @@ interface EmailJobPayload {
 }
 @Processor(EMAIL_QUEUE)
 export class EmailProcessor {
+  private readonly logger = new Logger(EmailProcessor.name);
+
   constructor(private readonly emailService: EmailService) {}
 
   @Process(PROCESS_EMAIL_JOB)
   async process(job: Job<EmailJobPayload>) {
     const { task, assignee, context } = job.data;
+    const googleId = job.data.googleId?.trim();
+    if (!googleId) {
+      this.logger.warn(
+        `Skipping email draft creation for task "${task}" because googleId is missing`,
+      );
+      return;
+    }
 
     // Use Gemini again to DRAFT the email body
     const draft = await this.emailService.generateEmailDraft(task, context);
@@ -28,7 +38,7 @@ export class EmailProcessor {
         subject: draft.subject,
         body: draft.body,
       },
-      job.data.googleId ?? '',
+      googleId,
     );
 
     // Notify user that a draft is ready

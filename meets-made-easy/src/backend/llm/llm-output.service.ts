@@ -19,7 +19,7 @@ export class LlmOutputService {
     '..',
     '..',
     'src',
-    'backend',
+    'backend', 
     'llm',
     'outputs',
   );
@@ -60,11 +60,13 @@ export class LlmOutputService {
   async saveToDb(
     jobKey: string,
     payload: LlmAnswerResult,
+    googleId?: string,
   ): Promise<LlmOutputDocument> {
     const parsed = payload.parsed ?? null;
 
     return this.llmOutputModel.create({
       jobKey,
+      googleId,
       model: payload.model,
       answer: payload.answer,
       parsed,
