@@ -10,6 +10,7 @@ interface CalendarJobPayload {
   assignee: string;
   context: string;
   deadline?: string;
+  googleId?: string;
 }
 
 @Processor(CALENDAR_QUEUE)
@@ -68,14 +69,17 @@ export class CalendarQueue {
     }
 
     // 3. Create the event on Google Calendar
-    const result = await this.calendarService.createCalendarEvent({
-      from,
-      to,
-      title: eventMeta.title,
-      // Note: assignee is the person doing the task (e.g. SPEAKER_01), not an attendee email.
-      attendees: [],
-      description: eventMeta.description,
-    });
+    const result = await this.calendarService.createCalendarEvent(
+      {
+        from,
+        to,
+        title: eventMeta.title,
+        // Note: assignee is the person doing the task (e.g. SPEAKER_01), not an attendee email.
+        attendees: [],
+        description: eventMeta.description,
+      },
+      job.data.googleId ?? '',
+    );
 
     if (result) {
       this.logger.log(

@@ -1,15 +1,14 @@
-import { InjectModel } from "@nestjs/mongoose";
-import { LlmService } from "../llm/llm.service";
-import { Document, DocumentDocument } from "../schemas/document.schema";
-import { Model } from "mongoose";
-import { AuthService } from "../auth/auth.service";
-import { Injectable, Logger } from "@nestjs/common";
-import { google } from "googleapis";
+import { InjectModel } from '@nestjs/mongoose';
+import { LlmService } from '../llm/llm.service';
+import { Document, DocumentDocument } from '../schemas/document.schema';
+import { Model } from 'mongoose';
+import { AuthService } from '../auth/auth.service';
+import { Injectable, Logger } from '@nestjs/common';
+import { google } from 'googleapis';
 
 interface DocumentEvent {
   title: string;
   content: string;
- 
 }
 @Injectable()
 export class DocumentService {
@@ -19,16 +18,18 @@ export class DocumentService {
     private readonly authService: AuthService,
     @InjectModel(Document.name)
     private readonly documentModel: Model<DocumentDocument>,
-  ){}
+  ) {}
   async generateDocument(task: string, context: string) {
     const prompt = this.buildPrompt(task, context);
     const result = await this.llmService.generateContent(prompt);
     const parsed = this.llmService.tryParseJson(result);
-    if(parsed && typeof parsed === 'object'){
+    if (parsed && typeof parsed === 'object') {
       const candidate = parsed as Record<string, unknown>;
-      const title = typeof candidate.title === 'string' ? candidate.title.trim() : '';
-      const content = typeof candidate.content === 'string' ? candidate.content.trim() : '';
-      
+      const title =
+        typeof candidate.title === 'string' ? candidate.title.trim() : '';
+      const content =
+        typeof candidate.content === 'string' ? candidate.content.trim() : '';
+
       return {
         title,
         content,
@@ -62,21 +63,25 @@ ${context}
 `;
   }
 
-   async createDocument(document: DocumentEvent, meetingId: string, googleId: string){
+  async createDocument(
+    document: DocumentEvent,
+    meetingId: string,
+    googleId: string,
+  ) {
     const oauth2Client = await this.getClient(googleId);
-    if(!oauth2Client){
+    if (!oauth2Client) {
       this.logger.warn('No authenticated user found - cannot create document');
       return null;
     }
     const docs = google.docs({ version: 'v1', auth: oauth2Client });
-    try{
+    try {
       const response = await docs.documents.create({
         requestBody: {
           title: document.title,
-        }
+        },
       });
       const documentId = response.data.documentId;
-      
+
       if (documentId && document.content) {
         await docs.documents.batchUpdate({
           documentId: documentId,
@@ -95,13 +100,13 @@ ${context}
         });
       }
       return response.data;
-    }catch(error){
+    } catch (error) {
       this.logger.error('Failed to create document', error);
       throw error;
     }
   }
 
-   async saveDocument(document: DocumentEvent, meetingId: string, task: string){
+  async saveDocument(document: DocumentEvent, meetingId: string, task: string) {
     return this.documentModel.create({
       meetingId,
       title: document.title,
@@ -109,13 +114,15 @@ ${context}
       task: task,
     });
   }
-  private async getClient(googleId: string){
+  private async getClient(googleId: string) {
     // const user = googleId
     //   ? await this.authService.getUserByGoogleId(googleId)
     //   : await this.authService.getLatestUser();
-    const user = await this.authService.getUserByGoogleId(googleId)
+    const user = await this.authService.getUserByGoogleId(googleId);
     if (!user) {
-      this.logger.warn('No authenticated user found — cannot create Gmail draft.');
+      this.logger.warn(
+        'No authenticated user found — cannot create Gmail draft.',
+      );
       return null;
     }
 
@@ -132,6 +139,4 @@ ${context}
 
     return oauth2Client;
   }
-
-    
 }

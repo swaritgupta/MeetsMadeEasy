@@ -6,17 +6,21 @@ import FormData from 'form-data';
 
 @Injectable()
 export class DiarisationService {
-  private readonly baseUrl = process.env.DIARISATION_MS_URL || 'http://127.0.0.1:8001';
-  constructor(private readonly httpUtil: HttpUtil){}
-  async diariseAudio(filePath: string){
-    console.log("Diarising audio file")
+  private readonly baseUrl =
+    process.env.DIARISATION_MS_URL || 'http://127.0.0.1:8001';
+  constructor(private readonly httpUtil: HttpUtil) {}
+  async diariseAudio(filePath: string) {
+    console.log('Diarising audio file');
     if (!filePath || !fs.existsSync(filePath)) {
-      throw new HttpException('Audio file not found for diarisation', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Audio file not found for diarisation',
+        HttpStatus.BAD_REQUEST,
+      );
     }
     const url = `${this.baseUrl}/diarise`;
     const form = new FormData();
     form.append('file', fs.createReadStream(filePath), path.basename(filePath));
-    
+
     const timeoutMs = Number(process.env.DIARISATION_TIMEOUT_MS || 300000);
     const response = await this.httpUtil.post<any>(url, form, {
       headers: form.getHeaders(),
@@ -24,7 +28,7 @@ export class DiarisationService {
       maxContentLength: Infinity,
       timeout: Number.isFinite(timeoutMs) ? timeoutMs : 300000,
     });
-    console.log('Diarisation completed')
+    console.log('Diarisation completed');
     return response;
   }
 }

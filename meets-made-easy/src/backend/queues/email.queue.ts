@@ -7,6 +7,7 @@ interface EmailJobPayload {
   task: string;
   assignee: string;
   context: string;
+  googleId?: string;
 }
 @Processor(EMAIL_QUEUE)
 export class EmailProcessor {
@@ -20,12 +21,15 @@ export class EmailProcessor {
     const draft = await this.emailService.generateEmailDraft(task, context);
 
     // Don't send automatically — save as draft for human review
-    await this.emailService.createDraft({
-      //to:      this.resolveEmail(assignee),  // map speaker → real email
-      to: draft.to,
-      subject: draft.subject,
-      body: draft.body,
-    });
+    await this.emailService.createDraft(
+      {
+        //to:      this.resolveEmail(assignee),  // map speaker → real email
+        to: draft.to,
+        subject: draft.subject,
+        body: draft.body,
+      },
+      job.data.googleId ?? '',
+    );
 
     // Notify user that a draft is ready
     // await this.notificationService.notify(

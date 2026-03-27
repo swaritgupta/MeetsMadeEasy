@@ -1,5 +1,6 @@
 import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
 import { GoogleOAuthGuard } from './google-auth/google-oauth.guard';
+import { session } from 'express-session';
 
 @Controller('auth')
 export class AuthController {
@@ -15,12 +16,13 @@ export class AuthController {
     const user = req.user;
     console.log('user info:::', user);
     if (user?.googleId) {
-      res.cookie('googleId', user.googleId, {
-        httpOnly: true,
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      });
+      req.session.userId = user.googleId; // or user id
+      // res.cookie('googleId', user.googleId, {
+      //   httpOnly: true,
+      //   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      // });
     }
-    
+
     res.redirect('/dashboard');
   }
 }

@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { GeminiClient } from '../utilities/GeminiClient';
 import { AuthService } from '../auth/auth.service';
 
-
 type Merged = { speaker: string; word: string; start: number; end: number };
 type MeetingSentiment = 'positive' | 'neutral' | 'tense';
 
@@ -49,9 +48,7 @@ type ParseResult = {
 export class LlmService {
   private readonly llmModel = process.env.LLM_MODEL || 'gemini-2.5-pro';
 
-  constructor(
-    private readonly geminiClient: GeminiClient,
-  ) {}
+  constructor(private readonly geminiClient: GeminiClient) {}
 
   async generateAnswer(conv: Merged[]): Promise<LlmAnswerResult> {
     const prompt = this.buildPrompt(conv);
@@ -63,7 +60,11 @@ export class LlmService {
     // Retry once with a stricter repair prompt when the first response is malformed.
     if (!parseResult.parsed) {
       usedRetry = true;
-      const retryPrompt = this.buildRetryPrompt(conv, firstAnswer, parseResult.parseError);
+      const retryPrompt = this.buildRetryPrompt(
+        conv,
+        firstAnswer,
+        parseResult.parseError,
+      );
       const retryAnswer = await this.generateContent(retryPrompt);
       const retryResult = this.parseAndValidate(retryAnswer);
 
@@ -74,7 +75,8 @@ export class LlmService {
     }
 
     return {
-      answer: finalAnswer || 'I could not generate a response for this question.',
+      answer:
+        finalAnswer || 'I could not generate a response for this question.',
       model: this.llmModel,
       parsed: parseResult.parsed,
       parseError: parseResult.parseError,
@@ -112,7 +114,11 @@ ${transcript}
     return prompt;
   }
 
-  private buildRetryPrompt(conv: Merged[], invalidAnswer: string, parseError: string | null): string {
+  private buildRetryPrompt(
+    conv: Merged[],
+    invalidAnswer: string,
+    parseError: string | null,
+  ): string {
     const transcript = conv
       .map((seg) => `[${seg.start}-${seg.end}] ${seg.speaker}: ${seg.word}`)
       .join('\n');
@@ -160,55 +166,55 @@ ${transcript}
     return result.response.text()?.trim() ?? '';
   }
 
-//   async generateEmailDraft(task: string, context: string){
-//     const prompt = `
-// You are an assistant that drafts professional emails.
+  //   async generateEmailDraft(task: string, context: string){
+  //     const prompt = `
+  // You are an assistant that drafts professional emails.
 
-// Return ONLY valid JSON matching this exact schema:
-// {
-//   "to": "string",
-//   "subject": "string",
-//   "body": "string"
-// }
+  // Return ONLY valid JSON matching this exact schema:
+  // {
+  //   "to": "string",
+  //   "subject": "string",
+  //   "body": "string"
+  // }
 
-// Instructions:
-// - Use the task and context to draft a concise, polished email.
-// - If the recipient is not specified, set "to" to an empty string.
-// - Keep the subject clear and specific.
-// - Write the body as plain text with natural paragraph breaks.
-// - Do not wrap the JSON in markdown or code fences.
+  // Instructions:
+  // - Use the task and context to draft a concise, polished email.
+  // - If the recipient is not specified, set "to" to an empty string.
+  // - Keep the subject clear and specific.
+  // - Write the body as plain text with natural paragraph breaks.
+  // - Do not wrap the JSON in markdown or code fences.
 
-// TASK:
-// ${task}
+  // TASK:
+  // ${task}
 
-// CONTEXT:
-// ${context}
-// `;
+  // CONTEXT:
+  // ${context}
+  // `;
 
-//     const answer = await this.generateContent(prompt);
-//     const parsed = this.tryParseJson(answer);
+  //     const answer = await this.generateContent(prompt);
+  //     const parsed = this.tryParseJson(answer);
 
-//     if (parsed && typeof parsed === 'object') {
-//       const candidate = parsed as Record<string, unknown>;
-//       const to = typeof candidate.to === 'string' ? candidate.to.trim() : '';
-//       const subject = typeof candidate.subject === 'string' ? candidate.subject.trim() : '';
-//       const body = typeof candidate.body === 'string' ? candidate.body.trim() : '';
+  //     if (parsed && typeof parsed === 'object') {
+  //       const candidate = parsed as Record<string, unknown>;
+  //       const to = typeof candidate.to === 'string' ? candidate.to.trim() : '';
+  //       const subject = typeof candidate.subject === 'string' ? candidate.subject.trim() : '';
+  //       const body = typeof candidate.body === 'string' ? candidate.body.trim() : '';
 
-//       if (subject && body) {
-//         return {
-//           to,
-//           subject,
-//           body,
-//         };
-//       }
-//     }
+  //       if (subject && body) {
+  //         return {
+  //           to,
+  //           subject,
+  //           body,
+  //         };
+  //       }
+  //     }
 
-//     return {
-//       to: '',
-//       subject: task.trim() || 'Meeting Follow-up',
-//       body: answer || context || 'Unable to generate email draft.',
-//     };
-//   }
+  //     return {
+  //       to: '',
+  //       subject: task.trim() || 'Meeting Follow-up',
+  //       body: answer || context || 'Unable to generate email draft.',
+  //     };
+  //   }
 
   // async createDraft(email: EmailDraft, googleId?: string): Promise<{ id: string; message: { id: string } } | null> {
   //   // Retrieve the user's OAuth tokens.
@@ -284,7 +290,8 @@ ${transcript}
     if (!normalized) {
       return {
         parsed: null,
-        parseError: 'Response JSON did not match the expected meeting summary shape.',
+        parseError:
+          'Response JSON did not match the expected meeting summary shape.',
       };
     }
 
@@ -301,7 +308,10 @@ ${transcript}
 
     let text = raw.trim();
     if (text.startsWith('```')) {
-      text = text.replace(/^```[a-zA-Z]*\n?/, '').replace(/```$/, '').trim();
+      text = text
+        .replace(/^```[a-zA-Z]*\n?/, '')
+        .replace(/```$/, '')
+        .trim();
     }
 
     const firstBrace = text.indexOf('{');
@@ -323,8 +333,11 @@ ${transcript}
     }
 
     const candidate = value as Record<string, unknown>;
-    const summary = typeof candidate.summary === 'string' ? candidate.summary.trim() : '';
-    const meetingSentiment = this.normalizeSentiment(candidate.meeting_sentiment);
+    const summary =
+      typeof candidate.summary === 'string' ? candidate.summary.trim() : '';
+    const meetingSentiment = this.normalizeSentiment(
+      candidate.meeting_sentiment,
+    );
 
     if (!summary || !meetingSentiment) {
       return null;
@@ -355,8 +368,10 @@ ${transcript}
       const record = item as Record<string, unknown>;
       const decisionValue = record.decision;
       const madeByValue = record.made_by;
-      const decision = typeof decisionValue === 'string' ? decisionValue.trim() : '';
-      const madeBy = typeof madeByValue === 'string' ? madeByValue.trim() : undefined;
+      const decision =
+        typeof decisionValue === 'string' ? decisionValue.trim() : '';
+      const madeBy =
+        typeof madeByValue === 'string' ? madeByValue.trim() : undefined;
 
       if (!decision) {
         continue;
@@ -389,7 +404,9 @@ ${transcript}
       const deadlineValue = record.deadline;
       const task = typeof taskValue === 'string' ? taskValue.trim() : '';
       const assignedTo =
-        typeof assignedToValue === 'string' ? assignedToValue.trim() : undefined;
+        typeof assignedToValue === 'string'
+          ? assignedToValue.trim()
+          : undefined;
 
       if (!task) {
         continue;

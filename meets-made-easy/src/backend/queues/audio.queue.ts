@@ -12,6 +12,7 @@ import {
 interface AudioJobPayload {
   filePath: string;
   jobKey: string;
+  googleId?: string;
 }
 
 @Processor(AUDIO_PROCESSING_QUEUE)
@@ -25,17 +26,17 @@ export class AudioProcessor {
 
   @Process(PROCESS_AUDIO_JOB)
   async handleAudioJob(job: Job<AudioJobPayload>) {
-    const { filePath, jobKey } = job.data;
+    const { filePath, jobKey, googleId } = job.data;
     console.log('Audio job is being processed');
     await Promise.all([
       this.transcriptionQueue.add(
         PROCESS_TRANSCRIPTION_JOB,
-        { filePath, jobKey },
+        { filePath, jobKey, googleId },
         { attempts: 3, backoff: { type: 'exponential', delay: 2000 } },
       ),
       this.diarisationQueue.add(
         PROCESS_DIARISATION_JOB,
-        { filePath, jobKey },
+        { filePath, jobKey, googleId },
         { attempts: 3, backoff: { type: 'exponential', delay: 2000 } },
       ),
     ]);

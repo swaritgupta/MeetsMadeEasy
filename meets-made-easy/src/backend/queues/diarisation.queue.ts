@@ -12,6 +12,7 @@ import { AudioJobStateService } from './audio-job-state.service';
 interface DiarisationJobPayload {
   filePath: string;
   jobKey: string;
+  googleId?: string;
 }
 
 type TranscriptSeg = { text: string; start: number; end: number };
@@ -27,7 +28,7 @@ export class DiarisationProcessor {
 
   @Process(PROCESS_DIARISATION_JOB)
   async handleDiarisation(job: Job<DiarisationJobPayload>) {
-    const { filePath, jobKey } = job.data;
+    const { filePath, jobKey, googleId } = job.data;
     const diarisation = await this.diarisationService.diariseAudio(filePath);
     const segments = diarisation?.segments;
     if (Array.isArray(segments)) {
@@ -39,16 +40,19 @@ export class DiarisationProcessor {
       console.log(
         'Transcription and diarisation are ready, merging them from diarisation queue',
       );
-      await this.tryEnqueueMerge(jobKey);
+      await this.tryEnqueueMerge(jobKey, googleId);
     }
     return;
   }
 
-  private async tryEnqueueMerge(jobKey: string): Promise<void> {
+  private async tryEnqueueMerge(
+    jobKey: string,
+    googleId?: string,
+  ): Promise<void> {
     try {
       await this.mergeQueue.add(
         PROCESS_MERGE_JOB,
-        { jobKey },
+        { jobKey, googleId },
         {
           jobId: `merge:${jobKey}`,
           attempts: 3,

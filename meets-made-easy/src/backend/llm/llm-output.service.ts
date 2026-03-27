@@ -12,12 +12,22 @@ import { LlmOutput, LlmOutputDocument } from '../schemas/llm-output.schema';
 
 @Injectable()
 export class LlmOutputService {
-  private readonly outputDir = path.join(process.cwd(), 'src', 'backend', 'llm', 'outputs');
+  // Using __dirname instead of process.cwd() to bypass whisper-node modifying process.cwd()
+  private readonly outputDir = path.join(
+    __dirname,
+    '..',
+    '..',
+    '..',
+    'src',
+    'backend',
+    'llm',
+    'outputs',
+  );
 
   constructor(
     @InjectModel(LlmOutput.name)
     private readonly llmOutputModel: Model<LlmOutputDocument>,
-  ) { }
+  ) {}
 
   private ensureDir(): void {
     if (!fs.existsSync(this.outputDir)) {
@@ -32,15 +42,25 @@ export class LlmOutputService {
     const safeJobKey = jobKey.replace(/[^a-zA-Z0-9_-]/g, '_');
     const filePath = path.join(this.outputDir, `${safeJobKey}.json`);
 
-    await fs.promises.writeFile(filePath, JSON.stringify(payload, null, 2), 'utf8');
+    await fs.promises.writeFile(
+      filePath,
+      JSON.stringify(payload, null, 2),
+      'utf8',
+    );
     return filePath;
   }
 
   async findLatestByJobKey(jobKey: string): Promise<LlmOutputDocument | null> {
-    return this.llmOutputModel.findOne({ jobKey }).sort({ createdAt: -1 }).exec();
+    return this.llmOutputModel
+      .findOne({ jobKey })
+      .sort({ createdAt: -1 })
+      .exec();
   }
 
-  async saveToDb(jobKey: string, payload: LlmAnswerResult): Promise<LlmOutputDocument> {
+  async saveToDb(
+    jobKey: string,
+    payload: LlmAnswerResult,
+  ): Promise<LlmOutputDocument> {
     const parsed = payload.parsed ?? null;
 
     return this.llmOutputModel.create({
@@ -56,11 +76,15 @@ export class LlmOutputService {
     });
   }
 
-  private extractSummary(parsed: MeetingSummaryOutput | null): string | undefined {
+  private extractSummary(
+    parsed: MeetingSummaryOutput | null,
+  ): string | undefined {
     return parsed?.summary || undefined;
   }
 
-  private extractActionItems(parsed: MeetingSummaryOutput | null): MeetingActionItem[] {
+  private extractActionItems(
+    parsed: MeetingSummaryOutput | null,
+  ): MeetingActionItem[] {
     return parsed?.action_items ?? [];
   }
 }

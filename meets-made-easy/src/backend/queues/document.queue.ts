@@ -9,6 +9,7 @@ interface DocumentJobData {
   assignee: string;
   context: string;
   meetingId: string;
+  googleId?: string;
 }
 
 @Processor(DOCUMENT_QUEUE)
@@ -29,6 +30,7 @@ export class DocumentQueue {
       const createdDoc = await this.documentService.createDocument(
         doc,
         meetingId,
+        job.data.googleId ?? '',
       );
       if (createdDoc?.documentId) {
         this.logger.log(

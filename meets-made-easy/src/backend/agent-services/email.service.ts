@@ -1,21 +1,22 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { LlmService } from "../llm/llm.service";
-import { AuthService } from "../auth/auth.service";
+import { Injectable, Logger } from '@nestjs/common';
+import { LlmService } from '../llm/llm.service';
+import { AuthService } from '../auth/auth.service';
 import { google } from 'googleapis';
 
 export type EmailDraft = {
   to: string;
   subject: string;
   body: string;
-}
+};
 
 @Injectable()
-export class EmailService{
+export class EmailService {
   private readonly logger = new Logger(LlmService.name);
-  constructor(private readonly authService: AuthService, private readonly llmService: LlmService) {
+  constructor(
+    private readonly authService: AuthService,
+    private readonly llmService: LlmService,
+  ) {}
 
-  }
-  
   async generateEmailDraft(task: string, context: string) {
     const prompt = `
 You are an assistant that drafts professional emails.
@@ -47,8 +48,10 @@ ${context}
     if (parsed && typeof parsed === 'object') {
       const candidate = parsed as Record<string, unknown>;
       const to = typeof candidate.to === 'string' ? candidate.to.trim() : '';
-      const subject = typeof candidate.subject === 'string' ? candidate.subject.trim() : '';
-      const body = typeof candidate.body === 'string' ? candidate.body.trim() : '';
+      const subject =
+        typeof candidate.subject === 'string' ? candidate.subject.trim() : '';
+      const body =
+        typeof candidate.body === 'string' ? candidate.body.trim() : '';
 
       if (subject && body) {
         return {
@@ -66,10 +69,15 @@ ${context}
     };
   }
 
-  async createDraft(email: EmailDraft, googleId: string): Promise<{ id: string; message: { id: string } } | null> {
+  async createDraft(
+    email: EmailDraft,
+    googleId: string,
+  ): Promise<{ id: string; message: { id: string } } | null> {
     const oauth2Client = await this.getClient(googleId);
-    if(!oauth2Client){
-      this.logger.warn('No authenticated user found — cannot create Gmail draft.');
+    if (!oauth2Client) {
+      this.logger.warn(
+        'No authenticated user found — cannot create Gmail draft.',
+      );
       return null;
     }
 
@@ -111,14 +119,16 @@ ${context}
     }
   }
 
-  private async getClient(googleId: string){
+  private async getClient(googleId: string) {
     // const user = googleId
     //   ? await this.authService.getUserByGoogleId(googleId)
     //   : await this.authService.getLatestUser();
-    const user = await this.authService.getUserByGoogleId(googleId)
+    const user = await this.authService.getUserByGoogleId(googleId);
 
     if (!user) {
-      this.logger.warn('No authenticated user found — cannot create Gmail draft.');
+      this.logger.warn(
+        'No authenticated user found — cannot create Gmail draft.',
+      );
       return null;
     }
 
@@ -135,6 +145,4 @@ ${context}
 
     return oauth2Client;
   }
-
-
 }

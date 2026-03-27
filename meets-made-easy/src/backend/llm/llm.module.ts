@@ -9,12 +9,13 @@ import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: LlmOutput.name, schema: LlmOutputSchema }]),
+    MongooseModule.forFeature([
+      { name: LlmOutput.name, schema: LlmOutputSchema },
+    ]),
     AuthModule,
   ],
   controllers: [LlmController],
   providers: [LlmService, LlmOutputService, GeminiClient],
   exports: [LlmService, LlmOutputService],
 })
-export class LlmModule { }
-
+export class LlmModule {}

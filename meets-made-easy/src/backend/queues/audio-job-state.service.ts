@@ -31,7 +31,10 @@ export class AudioJobStateService {
     }
   }
 
-  async storeTranscription(jobKey: string, transcription: unknown): Promise<void> {
+  async storeTranscription(
+    jobKey: string,
+    transcription: unknown,
+  ): Promise<void> {
     const dir = this.ensureJobDir(jobKey);
     await this.writeJson(path.join(dir, 'transcription.json'), transcription);
   }

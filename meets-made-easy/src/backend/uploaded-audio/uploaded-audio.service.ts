@@ -27,7 +27,7 @@ export class UploadedAudioService {
     @InjectQueue(AUDIO_PROCESSING_QUEUE)
     private readonly audioQueue: Queue,
   ) {}
-  async enqueueAudioFile(file: Express.Multer.File) {
+  async enqueueAudioFile(file: Express.Multer.File, googleId?: string) {
     console.log('Enqueueing audio file');
     if (!file) {
       console.log('no file found');
@@ -35,7 +35,7 @@ export class UploadedAudioService {
     const jobKey = randomUUID();
     return this.audioQueue.add(
       PROCESS_AUDIO_JOB,
-      { filePath: file.path, jobKey, file: file },
+      { filePath: file.path, jobKey, file: file, googleId },
       {
         attempts: 3,
         backoff: { type: 'exponential', delay: 2000 },

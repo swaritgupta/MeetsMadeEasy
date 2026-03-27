@@ -14,6 +14,7 @@ type Merged = { speaker: string; word: string; start: number; end: number };
 interface LlmJobPayload {
   jobKey: string;
   conv: Merged[];
+  googleId?: string;
 }
 
 @Processor(LLM_QUEUE)
@@ -28,7 +29,7 @@ export class LlmQueue {
   @Process(PROCESS_LLM_JOB)
   async handleLLMJob(job: Job<LlmJobPayload>) {
     console.log('LLM job is being processed');
-    const { conv, jobKey } = job.data;
+    const { conv, jobKey, googleId } = job.data;
     const result = await this.llmService.generateAnswer(conv);
     const savedPath = await this.llmOutput.save(jobKey, result);
     const record = await this.llmOutput.saveToDb(jobKey, result);
@@ -44,6 +45,7 @@ export class LlmQueue {
       await this.actionQueue.add(PROCESS_ACTION_JOB, {
         ...result.parsed,
         meetingId: jobKey,
+        googleId,
       });
     }
     console.log('Action job enqueued');

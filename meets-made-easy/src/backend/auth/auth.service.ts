@@ -16,13 +16,15 @@ export class AuthService {
   constructor(
     @InjectModel(User.name)
     private readonly userModel: Model<UserDocument>,
-  ) { }
+  ) {}
 
   /**
    * Upsert a user by googleId — create on first login, update tokens on subsequent logins.
    */
   async validateUser(profile: GoogleProfile): Promise<UserDocument> {
-    const existing = await this.userModel.findOne({ googleId: profile.googleId }).exec();
+    const existing = await this.userModel
+      .findOne({ googleId: profile.googleId })
+      .exec();
 
     if (existing) {
       existing.accessToken = profile.accessToken;
