@@ -23,7 +23,7 @@ export class UploadedAudioController {
   @UseInterceptors(
     FileInterceptor('audio', {
       storage: diskStorage({
-        destination: join(__dirname, '../../..', 'data'),
+        destination: join(__dirname, '../..', 'data'),
         filename: (req, file, callback) => {
           const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1e9);
           callback(null, uniqueName + extname(file.originalname));

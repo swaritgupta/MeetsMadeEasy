@@ -17,9 +17,8 @@ export class LlmOutputService {
     __dirname,
     '..',
     '..',
-    '..',
     'src',
-    'backend', 
+    'backend',
     'llm',
     'outputs',
   );
