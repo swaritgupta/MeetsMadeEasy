@@ -8,6 +8,8 @@ import {
 } from './queue-constants';
 import { UploadedAudioService } from '../uploaded-audio/uploaded-audio.service';
 import { AudioJobStateService } from './audio-job-state.service';
+import { AudioJobService } from '../utilities/AudioJobService';
+import { StageTypes } from '../types/stage.enum';
 
 interface MergeJobPayload {
   jobKey: string;
@@ -22,6 +24,7 @@ export class MergeProcessor {
   constructor(
     private readonly uploadedAudioService: UploadedAudioService,
     private readonly jobState: AudioJobStateService,
+    private readonly audioJobService: AudioJobService,
     @InjectQueue(LLM_QUEUE)
     private readonly llmQueue: Queue,
   ) {}
@@ -30,32 +33,44 @@ export class MergeProcessor {
   async handleMerge(job: Job<MergeJobPayload>) {
     console.log('Merge job is being processed');
     const { jobKey, googleId } = job.data;
-    const [diarisation, transcription] = await Promise.all([
-      this.jobState.getDiarisation<DiarSeg[]>(jobKey),
-      this.jobState.getTranscription<TranscriptSeg[]>(jobKey),
-    ]);
-
-    if (!Array.isArray(diarisation) || !Array.isArray(transcription)) {
-      console.error('Error while processing audio');
-      return;
-    }
-
-    const convSegment =
-      await this.uploadedAudioService.mergeTranscriptionDiarisation(
-        diarisation,
-        transcription,
-      );
-    console.log(convSegment);
     try {
+      await this.audioJobService.markStageProcessing(jobKey, StageTypes.MERGE);
+
+      const [diarisation, transcription] = await Promise.all([
+        this.jobState.getDiarisation<DiarSeg[]>(jobKey),
+        this.jobState.getTranscription<TranscriptSeg[]>(jobKey),
+      ]);
+
+      if (!Array.isArray(diarisation) || !Array.isArray(transcription)) {
+        throw new Error(
+          'Merge stage requires both transcription and diarisation artifacts',
+        );
+      }
+
+      const convSegment =
+        await this.uploadedAudioService.mergeTranscriptionDiarisation(
+          diarisation,
+          transcription,
+        );
+      console.log(convSegment);
+      await this.jobState.storeMergedConversation(jobKey, convSegment);
+      await this.audioJobService.markArtifactReady(jobKey, 'mergedConversation');
+
+      await this.audioJobService.markStageCompleted(jobKey, StageTypes.MERGE);
       await this.llmQueue.add(
         PROCESS_LLM_JOB,
-        { jobKey, conv: convSegment, googleId },
+        { jobKey, googleId },
         { attempts: 2, backoff: { type: 'exponential', delay: 2000 } },
       );
+      await this.audioJobService.markStageQueued(jobKey, StageTypes.LLM);
     } catch (error) {
-      console.error('Failed to enqueue LLM job', error);
+      const message =
+        error instanceof Error ? error.message : 'Merge stage failed';
+      console.error('Failed during merge stage', error);
+      await this.audioJobService.markFailed(jobKey, StageTypes.MERGE, message);
+      throw error;
     }
-    await this.jobState.cleanup(jobKey);
+
     return;
   }
 }

@@ -19,3 +19,4 @@ ENV
 diarisation-service/
 meets-made-easy/data/
 meets-made-easy/src/backend/llm/outputs/
+src/backend/llm/outputs/

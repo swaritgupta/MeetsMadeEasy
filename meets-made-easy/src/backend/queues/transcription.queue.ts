@@ -8,6 +8,8 @@ import {
 } from './queue-constants';
 import { UploadedAudioService } from '../uploaded-audio/uploaded-audio.service';
 import { AudioJobStateService } from './audio-job-state.service';
+import { AudioJobService } from '../utilities/AudioJobService';
+import { StageTypes } from '../types/stage.enum';
 
 interface TranscriptionJobPayload {
   filePath: string;
@@ -22,6 +24,7 @@ export class TranscriptionProcessor {
   constructor(
     private readonly uploadedAudioService: UploadedAudioService,
     private readonly jobState: AudioJobStateService,
+    private readonly audioJobService: AudioJobService,
     @InjectQueue(MERGE_QUEUE)
     private readonly mergeQueue: Queue,
   ) {}
@@ -29,16 +32,40 @@ export class TranscriptionProcessor {
   @Process(PROCESS_TRANSCRIPTION_JOB)
   async handleTranscription(job: Job<TranscriptionJobPayload>) {
     const { filePath, jobKey, googleId } = job.data;
-    const transcription =
-      await this.uploadedAudioService.transcribeAudio(filePath);
-    await this.jobState.storeTranscription(jobKey, transcription);
-    const diarisation = await this.jobState.getDiarisation<DiarSeg[]>(jobKey);
-    if (Array.isArray(diarisation)) {
-      console.log(
-        'Transcription and diarisation are ready, merging them from transcription queue',
+    await this.audioJobService.markStageProcessing(
+      jobKey,
+      StageTypes.TRANSCRIPTION,
+    );
+
+    try {
+      const transcription =
+        await this.uploadedAudioService.transcribeAudio(filePath);
+      await this.jobState.storeTranscription(jobKey, transcription);
+      await this.audioJobService.markArtifactReady(jobKey, 'transcription');
+      await this.audioJobService.markStageCompleted(
+        jobKey,
+        StageTypes.TRANSCRIPTION,
       );
-      await this.tryEnqueueMerge(jobKey, googleId);
+
+      const diarisation = await this.jobState.getDiarisation<DiarSeg[]>(jobKey);
+      if (Array.isArray(diarisation)) {
+        console.log(
+          'Transcription and diarisation are ready, merging them from transcription queue',
+        );
+        await this.audioJobService.markStageQueued(jobKey, StageTypes.MERGE);
+        await this.tryEnqueueMerge(jobKey, googleId);
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Transcription stage failed';
+      await this.audioJobService.markFailed(
+        jobKey,
+        StageTypes.TRANSCRIPTION,
+        message,
+      );
+      throw error;
     }
+
     return;
   }
 

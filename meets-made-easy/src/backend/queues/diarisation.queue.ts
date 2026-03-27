@@ -8,6 +8,8 @@ import {
 } from './queue-constants';
 import { DiarisationService } from '../diarisation/diarisation.service';
 import { AudioJobStateService } from './audio-job-state.service';
+import { AudioJobService } from '../utilities/AudioJobService';
+import { StageTypes } from '../types/stage.enum';
 
 interface DiarisationJobPayload {
   filePath: string;
@@ -22,6 +24,7 @@ export class DiarisationProcessor {
   constructor(
     private readonly diarisationService: DiarisationService,
     private readonly jobState: AudioJobStateService,
+    private readonly audioJobService: AudioJobService,
     @InjectQueue(MERGE_QUEUE)
     private readonly mergeQueue: Queue,
   ) {}
@@ -29,19 +32,43 @@ export class DiarisationProcessor {
   @Process(PROCESS_DIARISATION_JOB)
   async handleDiarisation(job: Job<DiarisationJobPayload>) {
     const { filePath, jobKey, googleId } = job.data;
-    const diarisation = await this.diarisationService.diariseAudio(filePath);
-    const segments = diarisation?.segments;
-    if (Array.isArray(segments)) {
-      await this.jobState.storeDiarisation(jobKey, segments);
-    }
-    const transcription =
-      await this.jobState.getTranscription<TranscriptSeg[]>(jobKey);
-    if (Array.isArray(transcription)) {
-      console.log(
-        'Transcription and diarisation are ready, merging them from diarisation queue',
+    await this.audioJobService.markStageProcessing(
+      jobKey,
+      StageTypes.DIARISATION,
+    );
+
+    try {
+      const diarisation = await this.diarisationService.diariseAudio(filePath);
+      const segments = diarisation?.segments;
+      if (Array.isArray(segments)) {
+        await this.jobState.storeDiarisation(jobKey, segments);
+        await this.audioJobService.markArtifactReady(jobKey, 'diarisation');
+      }
+      await this.audioJobService.markStageCompleted(
+        jobKey,
+        StageTypes.DIARISATION,
       );
-      await this.tryEnqueueMerge(jobKey, googleId);
+
+      const transcription =
+        await this.jobState.getTranscription<TranscriptSeg[]>(jobKey);
+      if (Array.isArray(transcription)) {
+        console.log(
+          'Transcription and diarisation are ready, merging them from diarisation queue',
+        );
+        await this.audioJobService.markStageQueued(jobKey, StageTypes.MERGE);
+        await this.tryEnqueueMerge(jobKey, googleId);
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Diarisation stage failed';
+      await this.audioJobService.markFailed(
+        jobKey,
+        StageTypes.DIARISATION,
+        message,
+      );
+      throw error;
     }
+
     return;
   }
 

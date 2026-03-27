@@ -34,6 +34,12 @@ import { Calendar, CalendarSchema } from '../schemas/calendar.schema';
 import { DocumentQueue } from '../queues/document.queue';
 import { DocumentService } from '../agent-services/document.service';
 import { Document, DocumentSchema } from '../schemas/document.schema';
+import { AudioJob, AudioJobSchema } from '../schemas/audioJob.schema';
+import { AudioJobService } from '../utilities/AudioJobService';
+import {
+  AudioJobArtifact,
+  AudioJobArtifactSchema,
+} from '../schemas/audio-job-artifact.schema';
 
 @Module({
   imports: [
@@ -54,6 +60,12 @@ import { Document, DocumentSchema } from '../schemas/document.schema';
     MongooseModule.forFeature([
       { name: Document.name, schema: DocumentSchema },
     ]),
+    MongooseModule.forFeature([
+      { name: AudioJob.name, schema: AudioJobSchema },
+    ]),
+    MongooseModule.forFeature([
+      { name: AudioJobArtifact.name, schema: AudioJobArtifactSchema },
+    ]),
     HttpUtilModule,
     LlmModule,
     AuthModule,
@@ -67,6 +79,7 @@ import { Document, DocumentSchema } from '../schemas/document.schema';
     MergeProcessor,
     LlmQueue,
     AudioJobStateService,
+    AudioJobService,
     DiarisationService,
     EmailProcessor,
     EmailService,

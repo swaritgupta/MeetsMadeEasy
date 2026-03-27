@@ -1,75 +1,74 @@
 import { Injectable } from '@nestjs/common';
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import {
+  AudioJobArtifact,
+  AudioJobArtifactDocument,
+} from '../schemas/audio-job-artifact.schema';
 
 @Injectable()
 export class AudioJobStateService {
-  private readonly rootDir = path.join(os.tmpdir(), 'mme-audio-jobs');
-
-  private ensureJobDir(jobKey: string): string {
-    if (!fs.existsSync(this.rootDir)) {
-      fs.mkdirSync(this.rootDir, { recursive: true });
-    }
-    const dir = path.join(this.rootDir, jobKey);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    return dir;
-  }
-
-  private async writeJson(filePath: string, payload: unknown): Promise<void> {
-    await fs.promises.writeFile(filePath, JSON.stringify(payload), 'utf8');
-  }
-
-  private async readJson<T>(filePath: string): Promise<T | null> {
-    try {
-      const raw = await fs.promises.readFile(filePath, 'utf8');
-      return JSON.parse(raw) as T;
-    } catch {
-      return null;
-    }
-  }
+  constructor(
+    @InjectModel(AudioJobArtifact.name)
+    private readonly audioJobArtifactModel: Model<AudioJobArtifactDocument>,
+  ) {}
 
   async storeTranscription(
     jobKey: string,
     transcription: unknown,
   ): Promise<void> {
-    const dir = this.ensureJobDir(jobKey);
-    await this.writeJson(path.join(dir, 'transcription.json'), transcription);
+    await this.audioJobArtifactModel
+      .findOneAndUpdate(
+        { jobKey },
+        { $set: { transcription } },
+        { upsert: true, new: true, setDefaultsOnInsert: true },
+      )
+      .exec();
   }
 
   async storeDiarisation(jobKey: string, diarisation: unknown): Promise<void> {
-    const dir = this.ensureJobDir(jobKey);
-    await this.writeJson(path.join(dir, 'diarisation.json'), diarisation);
+    await this.audioJobArtifactModel
+      .findOneAndUpdate(
+        { jobKey },
+        { $set: { diarisation } },
+        { upsert: true, new: true, setDefaultsOnInsert: true },
+      )
+      .exec();
   }
 
-  async storellmResponse(jobKey: string, llmResponse: unknown): Promise<void> {
-    const dir = this.ensureJobDir(jobKey);
-    await this.writeJson(path.join(dir, 'llmresponse.json'), llmResponse);
+  async storeMergedConversation(
+    jobKey: string,
+    mergedConversation: unknown,
+  ): Promise<void> {
+    await this.audioJobArtifactModel
+      .findOneAndUpdate(
+        { jobKey },
+        { $set: { mergedConversation } },
+        { upsert: true, new: true, setDefaultsOnInsert: true },
+      )
+      .exec();
   }
 
   async getTranscription<T>(jobKey: string): Promise<T | null> {
-    const filePath = path.join(this.rootDir, jobKey, 'transcription.json');
-    return this.readJson<T>(filePath);
+    const artifact = await this.audioJobArtifactModel.findOne({ jobKey }).exec();
+    return (artifact?.transcription as T | undefined) ?? null;
   }
 
   async getDiarisation<T>(jobKey: string): Promise<T | null> {
-    const filePath = path.join(this.rootDir, jobKey, 'diarisation.json');
-    return this.readJson<T>(filePath);
+    const artifact = await this.audioJobArtifactModel.findOne({ jobKey }).exec();
+    return (artifact?.diarisation as T | undefined) ?? null;
   }
 
-  async getllmResponse<T>(jobKey: string): Promise<T | null> {
-    const filePath = path.join(this.rootDir, jobKey, 'llmresponse.json');
-    return this.readJson<T>(filePath);
+  async getMergedConversation<T>(jobKey: string): Promise<T | null> {
+    const artifact = await this.audioJobArtifactModel.findOne({ jobKey }).exec();
+    return (artifact?.mergedConversation as T | undefined) ?? null;
+  }
+
+  async getArtifacts(jobKey: string): Promise<AudioJobArtifactDocument | null> {
+    return this.audioJobArtifactModel.findOne({ jobKey }).exec();
   }
 
   async cleanup(jobKey: string): Promise<void> {
-    const dir = path.join(this.rootDir, jobKey);
-    try {
-      await fs.promises.rm(dir, { recursive: true, force: true });
-    } catch {
-      // Best-effort cleanup.
-    }
+    await this.audioJobArtifactModel.deleteOne({ jobKey }).exec();
   }
 }

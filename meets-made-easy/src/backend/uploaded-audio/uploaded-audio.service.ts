@@ -11,10 +11,8 @@ import {
   AUDIO_PROCESSING_QUEUE,
   PROCESS_AUDIO_JOB,
 } from '../queues/queue-constants';
-import { randomUUID } from 'crypto';
-import { OpenAI } from 'openai';
-import { OpenAIClient } from '../utilities/OpenAIClient';
 import whisper from 'whisper-node';
+
 type DiarSeg = { speaker: string; start: number; end: number };
 type TranscriptSeg = { text: string; start: number; end: number };
 type Merged = { speaker: string; word: string; start: number; end: number };
@@ -27,15 +25,20 @@ export class UploadedAudioService {
     @InjectQueue(AUDIO_PROCESSING_QUEUE)
     private readonly audioQueue: Queue,
   ) {}
-  async enqueueAudioFile(file: Express.Multer.File, googleId: string) {
+
+  async enqueueAudioFile(
+    file: Express.Multer.File,
+    googleId: string,
+    jobKey: string,
+  ): Promise<void> {
     console.log('Enqueueing audio file');
     if (!file) {
       console.log('no file found');
     }
-    const jobKey = randomUUID();
-    return this.audioQueue.add(
+
+    await this.audioQueue.add(
       PROCESS_AUDIO_JOB,
-      { filePath: file.path, jobKey, file: file, googleId },
+      { filePath: file.path, jobKey, googleId },
       {
         attempts: 3,
         backoff: { type: 'exponential', delay: 2000 },

@@ -6,13 +6,14 @@ import {
   DOCUMENT_QUEUE,
   EMAIL_QUEUE,
   PROCESS_ACTION_JOB,
-  PROCESS_AUDIO_JOB,
   PROCESS_CALENDAR_JOB,
   PROCESS_DOCUMENT_JOB,
   PROCESS_EMAIL_JOB,
 } from './queue-constants';
 import type { MeetingSummaryOutput } from '../llm/llm.service';
 import type { Job, Queue } from 'bull';
+import { AudioJobService } from '../utilities/AudioJobService';
+import { StageTypes } from '../types/stage.enum';
 
 @Processor(ACTION_QUEUE)
 export class ActionQueue {
@@ -25,55 +26,74 @@ export class ActionQueue {
     private readonly calendarQueue: Queue,
     @InjectQueue(DOCUMENT_QUEUE)
     private readonly documentQueue: Queue,
+    private readonly audioJobService: AudioJobService,
   ) {}
+
   @Process(PROCESS_ACTION_JOB)
   async handleActionJob(
     job: Job<MeetingSummaryOutput & { meetingId: string; googleId?: string }>,
   ) {
     const { meetingId, action_items, summary, googleId } = job.data;
-    const normalizedGoogleId = googleId?.trim();
-    if (!normalizedGoogleId) {
-      this.logger.warn(
-        `Skipping action dispatch for meeting "${meetingId}" because googleId is missing`,
-      );
-      return;
-    }
-    if (!Array.isArray(action_items)) {
-      return;
-    }
+    await this.audioJobService.markStageProcessing(meetingId, StageTypes.ACTIONS);
 
-    for (const action of action_items) {
-      const type = this.intent(action.task);
-      switch (type) {
-        case 'SCHEDULE':
-          await this.calendarQueue.add(PROCESS_CALENDAR_JOB, {
-            task: action.task,
-            assignee: action.assigned_to,
-            context: summary,
-            deadline: action.deadline ?? undefined,
-            meetingId,
-            googleId: normalizedGoogleId,
-          });
-          break;
-        case 'EMAIL':
-          await this.emailQueue.add(PROCESS_EMAIL_JOB, {
-            task: action.task,
-            assignee: action.assigned_to,
-            context: summary, // give the email agent context
-            meetingId,
-            googleId: normalizedGoogleId,
-          });
-          break;
-        case 'DOCUMENT':
-          await this.documentQueue.add(PROCESS_DOCUMENT_JOB, {
-            task: action.task,
-            assignee: action.assigned_to,
-            context: summary,
-            meetingId,
-            googleId: normalizedGoogleId,
-          });
-          break;
+    try {
+      const normalizedGoogleId = googleId?.trim();
+      if (!normalizedGoogleId) {
+        this.logger.warn(
+          `Skipping action dispatch for meeting "${meetingId}" because googleId is missing`,
+        );
+        await this.audioJobService.markCompleted(meetingId, StageTypes.ACTIONS);
+        return;
       }
+      if (!Array.isArray(action_items)) {
+        await this.audioJobService.markCompleted(meetingId, StageTypes.ACTIONS);
+        return;
+      }
+
+      for (const action of action_items) {
+        const type = this.intent(action.task);
+        switch (type) {
+          case 'SCHEDULE':
+            await this.calendarQueue.add(PROCESS_CALENDAR_JOB, {
+              task: action.task,
+              assignee: action.assigned_to,
+              context: summary,
+              deadline: action.deadline ?? undefined,
+              meetingId,
+              googleId: normalizedGoogleId,
+            });
+            break;
+          case 'EMAIL':
+            await this.emailQueue.add(PROCESS_EMAIL_JOB, {
+              task: action.task,
+              assignee: action.assigned_to,
+              context: summary, // give the email agent context
+              meetingId,
+              googleId: normalizedGoogleId,
+            });
+            break;
+          case 'DOCUMENT':
+            await this.documentQueue.add(PROCESS_DOCUMENT_JOB, {
+              task: action.task,
+              assignee: action.assigned_to,
+              context: summary,
+              meetingId,
+              googleId: normalizedGoogleId,
+            });
+            break;
+        }
+      }
+
+      await this.audioJobService.markCompleted(meetingId, StageTypes.ACTIONS);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Action dispatch failed';
+      await this.audioJobService.markFailed(
+        meetingId,
+        StageTypes.ACTIONS,
+        message,
+      );
+      throw error;
     }
   }
 
