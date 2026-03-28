@@ -21,7 +21,7 @@ export class AudioJobStateService {
       .findOneAndUpdate(
         { jobKey },
         { $set: { transcription } },
-        { upsert: true, new: true, setDefaultsOnInsert: true },
+        { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true },
       )
       .exec();
   }
@@ -31,7 +31,7 @@ export class AudioJobStateService {
       .findOneAndUpdate(
         { jobKey },
         { $set: { diarisation } },
-        { upsert: true, new: true, setDefaultsOnInsert: true },
+        { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true },
       )
       .exec();
   }
@@ -44,7 +44,7 @@ export class AudioJobStateService {
       .findOneAndUpdate(
         { jobKey },
         { $set: { mergedConversation } },
-        { upsert: true, new: true, setDefaultsOnInsert: true },
+        { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true },
       )
       .exec();
   }
